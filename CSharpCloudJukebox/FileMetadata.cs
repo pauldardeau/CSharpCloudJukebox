@@ -14,7 +14,8 @@ public sealed class FileMetadata
    public int Compressed;
    public int Encrypted;
 
-   public FileMetadata(string fileUid, string containerName, string objectName) {
+   public FileMetadata(string fileUid, string containerName, string objectName)
+   {
       FileUid = fileUid;
       FileName = "";
       OriginFileSize = 0;
@@ -35,7 +36,8 @@ public sealed class FileMetadata
          return false;
       }
       
-      if (obj is FileMetadata other) {
+      if (obj is FileMetadata other)
+      {
          return FileUid == other.FileUid &&
                 FileName == other.FileName &&
                 OriginFileSize == other.OriginFileSize &&
@@ -47,7 +49,9 @@ public sealed class FileMetadata
                 Encrypted == other.Encrypted &&
                 ContainerName == other.ContainerName &&
                 ObjectName == other.ObjectName;
-      } else {
+      }
+      else
+      {
          return false;
       }
    }
@@ -67,7 +71,8 @@ public sealed class FileMetadata
       string containerName;
       string objectName;
       
-      if (dictionary.ContainsKey(prefix + "file_uid")) {
+      if (dictionary.ContainsKey(prefix + "file_uid"))
+      {
          fileUid = (string) dictionary[prefix + "file_uid"];
       }
       else
@@ -75,7 +80,8 @@ public sealed class FileMetadata
          return null;
       }
       
-      if (dictionary.ContainsKey(prefix + "container_name")) {
+      if (dictionary.ContainsKey(prefix + "container_name"))
+      {
          containerName = (string) dictionary[prefix + "container_name"];
       }
       else
@@ -83,7 +89,8 @@ public sealed class FileMetadata
          return null;
       }
       
-      if (dictionary.ContainsKey(prefix + "object_name")) {
+      if (dictionary.ContainsKey(prefix + "object_name"))
+      {
          objectName = (string) dictionary[prefix + "object_name"];
       }
       else
@@ -93,36 +100,46 @@ public sealed class FileMetadata
 
       FileMetadata fm = new FileMetadata(fileUid, containerName, objectName);
 
-      if (dictionary.ContainsKey(prefix + "file_name")) {
+      if (dictionary.ContainsKey(prefix + "file_name"))
+      {
          fm.FileName = (string) dictionary[prefix + "file_name"];
       }
-      if (dictionary.ContainsKey(prefix + "origin_file_size")) {
+      if (dictionary.ContainsKey(prefix + "origin_file_size"))
+      {
          fm.OriginFileSize = (int) dictionary[prefix + "origin_file_size"];
       }
-      if (dictionary.ContainsKey(prefix + "stored_file_size")) {
+      if (dictionary.ContainsKey(prefix + "stored_file_size"))
+      {
          fm.StoredFileSize = (int) dictionary[prefix + "stored_file_size"];
       }
-      if (dictionary.ContainsKey(prefix + "pad_char_count")) {
+      if (dictionary.ContainsKey(prefix + "pad_char_count"))
+      {
          fm.PadCharCount = (int) dictionary[prefix + "pad_char_count"];
       }
-      if (dictionary.ContainsKey(prefix + "file_time")) {
+      if (dictionary.ContainsKey(prefix + "file_time"))
+      {
          fm.FileTime = (string) dictionary[prefix + "file_time"];
       }
-      if (dictionary.ContainsKey(prefix + "md5_hash")) {
+      if (dictionary.ContainsKey(prefix + "md5_hash"))
+      {
          fm.Md5Hash = (string) dictionary[prefix + "md5_hash"];
       }
-      if (dictionary.ContainsKey(prefix + "compressed")) {
+      if (dictionary.ContainsKey(prefix + "compressed"))
+      {
          fm.Compressed = (int) dictionary[prefix + "compressed"];
       }
-      if (dictionary.ContainsKey(prefix + "encrypted")) {
+      if (dictionary.ContainsKey(prefix + "encrypted"))
+      {
          fm.Encrypted = (int) dictionary[prefix + "encrypted"];
       }
 
       return fm;
    }
 
-   public Dictionary<string, object> ToDictionary(string prefix = "") {
-      var d = new Dictionary<string, object>() {
+   public Dictionary<string, object> ToDictionary(string prefix = "")
+   {
+      var d = new Dictionary<string, object>()
+      {
          {prefix + "file_uid", FileUid},
          {prefix + "file_name", FileName},
          {prefix + "origin_file_size", OriginFileSize},
@@ -138,7 +155,8 @@ public sealed class FileMetadata
       return d;
    }
 
-   public PropertySet ToPropertySet(string prefix = "") {
+   public PropertySet ToPropertySet(string prefix = "")
+   {
       PropertySet props = new PropertySet();
       props.Add(prefix + "file_uid", PropertyValue.StringPropertyValue(FileUid));
       props.Add(prefix + "file_name", PropertyValue.StringPropertyValue(FileName));

@@ -9,6 +9,7 @@ public class PropertyValue
    private const char TypeUlong = 'u';
    
    private readonly char _dataType;
+   // think of the following 5 fields as a union (only 1 is populated for an instance)
    private bool _boolValue;
    private string _stringValue;
    private int _intValue;

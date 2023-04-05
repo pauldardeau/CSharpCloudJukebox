@@ -12,46 +12,59 @@ public class JukeboxMain
       string updateAwsAccessKey = "";
       string updateAwsSecretKey = "";
 
-      if (credentials.ContainsKey("aws_access_key")) {
+      if (credentials.ContainsKey("aws_access_key"))
+      {
          awsAccessKey = credentials["aws_access_key"];
       }
-      if (credentials.ContainsKey("aws_secret_key")) {
+      if (credentials.ContainsKey("aws_secret_key"))
+      {
          awsSecretKey = credentials["aws_secret_key"];
       }
 
       if (credentials.ContainsKey("update_aws_access_key") &&
-          credentials.ContainsKey("update_aws_secret_key")) {
-
+          credentials.ContainsKey("update_aws_secret_key"))
+      {
          updateAwsAccessKey = credentials["update_aws_access_key"];
          updateAwsSecretKey = credentials["update_aws_secret_key"];
       }
 
-      if (inDebugMode) {
+      if (inDebugMode)
+      {
          Console.WriteLine("aws_access_key={0}", awsAccessKey);
          Console.WriteLine("aws_secret_key={0}", awsSecretKey);
-         if (updateAwsAccessKey.Length > 0 && updateAwsSecretKey.Length > 0) {
+         if (updateAwsAccessKey.Length > 0 && updateAwsSecretKey.Length > 0)
+         {
             Console.WriteLine("update_aws_access_key={0}", updateAwsAccessKey);
             Console.WriteLine("update_aws_secret_key={0}", updateAwsSecretKey);
          }
       }
 
-      if (awsAccessKey.Length == 0 || awsSecretKey.Length == 0) {
+      if (awsAccessKey.Length == 0 || awsSecretKey.Length == 0)
+      {
          Console.WriteLine("error: no s3 credentials given. please specify aws_access_key " +
                            "and aws_secret_key in credentials file");
          return null;
-      } else {
+      }
+      else
+      {
          string accessKey;
          string secretKey;
 
-         if (inUpdateMode) {
+         if (inUpdateMode)
+         {
             accessKey = updateAwsAccessKey;
             secretKey = updateAwsSecretKey;
-         } else {
+         }
+         else
+         {
             accessKey = awsAccessKey;
             secretKey = awsSecretKey;
          }
 
-         //Console.WriteLine("Creating S3StorageSystem");
+         if (inDebugMode)
+         {
+            Console.WriteLine("Creating S3StorageSystem");
+         }
          return new S3StorageSystem(accessKey,
                                     secretKey,
                                     prefix,
@@ -69,48 +82,58 @@ public class JukeboxMain
       string updateAzureAccountName = "";
       string updateAzureAccountKey = "";
 
-      if (credentials.ContainsKey("azure_account_name")) {
+      if (credentials.ContainsKey("azure_account_name"))
+      {
          azureAccountName = credentials["azure_account_name"];
       }
-      if (credentials.ContainsKey("azure_account_key")) {
+      if (credentials.ContainsKey("azure_account_key"))
+      {
          azureAccountKey = credentials["azure_account_key"];
       }
 
       if (credentials.ContainsKey("update_azure_account_name") &&
-          credentials.ContainsKey("update_azure_account_key")) {
-
+          credentials.ContainsKey("update_azure_account_key"))
+      {
          updateAzureAccountName = credentials["update_azure_account_name"];
          updateAzureAccountKey = credentials["update_azure_account_key"];
       }
 
-      if (inDebugMode) {
+      if (inDebugMode)
+      {
          Console.WriteLine("azure_account_name={0}", azureAccountName);
          Console.WriteLine("azure_account_key={0}", azureAccountKey);
-         if (updateAzureAccountName.Length > 0 && updateAzureAccountKey.Length > 0) {
+         if (updateAzureAccountName.Length > 0 && updateAzureAccountKey.Length > 0)
+         {
             Console.WriteLine("update_azure_account_name={0}", updateAzureAccountName);
             Console.WriteLine("update_azure_account_key={0}", updateAzureAccountKey);
          }
       }
 
-      if (azureAccountName.Length == 0 || azureAccountKey.Length == 0) {
+      if (azureAccountName.Length == 0 || azureAccountKey.Length == 0)
+      {
          Console.WriteLine("error: no azure credentials given. please specify azure_account_name " +
                            "and azure_account_key in credentials file");
          return null;
-      } else {
+      }
+      else
+      {
          /*
          string accountName;
          string accountKey;
 
-         if (inUpdateMode) {
+         if (inUpdateMode)
+         {
             accountName = updateAzureAccountName;
             accountKey = updateAzureAccountKey;
-         } else {
+         }
+         else
+         {
             accountName = azureAccountName;
             accountKey = azureAccountKey;
          }
          */
 
-         //TODO: (3) hookup AzureStorageSystem (connect_azure_system)
+         //TODO: (3) hookup AzureStorageSystem (ConnectAzureSystem)
          //return new AzureStorageSystem(accountName,
          //                              accountKey,
          //                              prefix,
@@ -124,18 +147,25 @@ public class JukeboxMain
                                                Dictionary<string, string> credentials,
                                                string prefix,
                                                bool inDebugMode,
-                                               bool inUpdateMode) {
-      if (systemName == "s3") {
+                                               bool inUpdateMode)
+   {
+      if (systemName == "s3")
+      {
          return ConnectS3System(credentials, prefix, inDebugMode, inUpdateMode);
-      } else if (systemName == "azure") {
+      }
+      else if (systemName == "azure")
+      {
          return ConnectAzureSystem(credentials, prefix, inDebugMode, inUpdateMode);
-      } else {
+      }
+      else
+      {
          Console.WriteLine("error: unrecognized storage system {0}", systemName);
          return null;
       }
    }
 
-   private void ShowUsage() {
+   private void ShowUsage()
+   {
       Console.WriteLine("Supported Commands:");
       Console.WriteLine("\tdelete-artist      - delete specified artist");
       Console.WriteLine("\tdelete-album       - delete specified album");
@@ -161,7 +191,8 @@ public class JukeboxMain
       Console.WriteLine("");
    }
 
-   public void Main(string[] consoleArgs) {
+   public void Main(string[] consoleArgs)
+   {
       int exitCode = 0;
       bool debugMode = false;
       string storageType = "swift";
@@ -174,7 +205,6 @@ public class JukeboxMain
       optParser.AddOptionalBoolFlag("--debug", "run in debug mode");
       optParser.AddOptionalIntArgument("--file-cache-count", "number of songs to buffer in cache");
       optParser.AddOptionalBoolFlag("--integrity-checks", "check file integrity after download");
-      optParser.AddOptionalBoolFlag("--compress", "use gzip compression");
       optParser.AddOptionalBoolFlag("--encrypt", "encrypt file contents");
       optParser.AddOptionalStringArgument("--key", "encryption key");
       optParser.AddOptionalStringArgument("--keyfile", "path to file containing encryption key");
@@ -189,51 +219,55 @@ public class JukeboxMain
 
       JukeboxOptions options = new JukeboxOptions();
 
-      if (args.ContainsKey("debug")) {
+      if (args.ContainsKey("debug"))
+      {
          debugMode = true;
          options.DebugMode = true;
       }
 
-      if (args.ContainsKey("file_cache_count")) {
+      if (args.ContainsKey("file_cache_count"))
+      {
         int fileCacheCount = (int) args["file_cache_count"];
-        if (debugMode) {
+        if (debugMode)
+        {
             Console.WriteLine("setting file cache count={0}", fileCacheCount);
         }
         options.FileCacheCount = fileCacheCount;
       }
 
-      if (args.ContainsKey("integrity_checks")) {
-         if (debugMode) {
+      if (args.ContainsKey("integrity_checks"))
+      {
+         if (debugMode)
+         {
             Console.WriteLine("setting integrity checks on");
          }
          options.CheckDataIntegrity = true;
       }
 
-      if (args.ContainsKey("compress")) {
-        if (debugMode) {
-            Console.WriteLine("setting compression on");
-        }
-        options.UseCompression = true;
-      }
-
-      if (args.ContainsKey("encrypt")) {
-         if (debugMode) {
+      if (args.ContainsKey("encrypt"))
+      {
+         if (debugMode)
+         {
             Console.WriteLine("setting encryption on");
          }
          options.UseEncryption = true;
       }
 
-      if (args.ContainsKey("key")) {
+      if (args.ContainsKey("key"))
+      {
          string key = (string) args["key"];
-         if (debugMode) {
+         if (debugMode)
+         {
             Console.WriteLine("setting encryption key={0}", key);
          }
          options.EncryptionKey = key;
       }
 
-      if (args.ContainsKey("keyfile")) {
+      if (args.ContainsKey("keyfile"))
+      {
          string keyfile = (string) args["keyfile"];
-         if (debugMode) {
+         if (debugMode)
+         {
             Console.WriteLine("reading encryption key file={0}", keyfile);
          }
 
@@ -247,45 +281,57 @@ public class JukeboxMain
             Utils.SysExit(1);
          }
 
-         if (options.EncryptionKey.Length == 0) {
+         if (options.EncryptionKey.Length == 0)
+         {
             Console.WriteLine("error: no key found in file {0}", keyfile);
             Utils.SysExit(1);
          }
       }
 
-      if (args.ContainsKey("storage")) {
+      if (args.ContainsKey("storage"))
+      {
          string storage = (string) args["storage"];
          List<string> supportedSystems = new List<string>{"swift", "s3", "azure"};
-         if (!supportedSystems.Contains(storage)) {
+         if (!supportedSystems.Contains(storage))
+         {
             Console.WriteLine("error: invalid storage type {0}", storage);
             //Console.WriteLine("supported systems are: %s" % str(supported_systems));
             Utils.SysExit(1);
-         } else {
-            if (debugMode) {
+         }
+         else
+         {
+            if (debugMode)
+            {
                Console.WriteLine("setting storage system to {0}", storage);
             }
             storageType = storage;
          }
       }
 
-      if (args.ContainsKey("artist")) {
+      if (args.ContainsKey("artist"))
+      {
          artist = (string) args["artist"];
       }
 
-      if (args.ContainsKey("playlist")) {
+      if (args.ContainsKey("playlist"))
+      {
          playlist = (string) args["playlist"];
       }
 
-      if (args.ContainsKey("song")) {
+      if (args.ContainsKey("song"))
+      {
          song = (string) args["song"];
       }
 
-      if (args.ContainsKey("album")) {
+      if (args.ContainsKey("album"))
+      {
          album = (string) args["album"];
       }
 
-      if (args.ContainsKey("command")) {
-         if (debugMode) {
+      if (args.ContainsKey("command"))
+      {
+         if (debugMode)
+         {
             Console.WriteLine("using storage system type {0}", storageType);
          }
 
@@ -294,20 +340,26 @@ public class JukeboxMain
          Dictionary<string, string> creds = new Dictionary<string, string>();
          string credsFilePath = Path.Join(Directory.GetCurrentDirectory(), credsFile);
 
-         if (Utils.PathExists(credsFilePath)) {
-            if (debugMode) {
+         if (Utils.PathExists(credsFilePath))
+         {
+            if (debugMode)
+            {
                Console.WriteLine("reading creds file {0}", credsFilePath);
             }
             try
             {
-               foreach (var fileLine in File.ReadLines(credsFilePath)) {
+               foreach (var fileLine in File.ReadLines(credsFilePath))
+               {
                   string trimmedFileLine = fileLine.Trim();
-                  if (trimmedFileLine.Length > 0) {
+                  if (trimmedFileLine.Length > 0)
+                  {
                      string[] tokens = trimmedFileLine.Split("=");
-                     if (tokens.Length == 2) {
+                     if (tokens.Length == 2)
+                     {
                         string key = tokens[0].Trim();
                         string value = tokens[1].Trim();
-                        if (key.Length > 0 && value.Length > 0) {
+                        if (key.Length > 0 && value.Length > 0)
+                        {
                            creds[key] = value;
                         }
                      }
@@ -316,11 +368,14 @@ public class JukeboxMain
             }
             catch (Exception )
             {
-               if (debugMode) {
+               if (debugMode)
+               {
                   Console.WriteLine("error: unable to read file {0}", credsFilePath);
                }
             }
-         } else {
+         }
+         else
+         {
             Console.WriteLine("no creds file ({0})", credsFilePath);
          }
 
@@ -343,15 +398,22 @@ public class JukeboxMain
          allCmds.AddRange(helpCmds);
          allCmds.AddRange(nonHelpCmds);
 
-         if (!allCmds.Contains(command)) {
+         if (!allCmds.Contains(command))
+         {
             Console.WriteLine("Unrecognized command {0}", command);
             Console.WriteLine("");
             ShowUsage();
-         } else {
-            if (helpCmds.Contains(command)) {
+         }
+         else
+         {
+            if (helpCmds.Contains(command))
+            {
                ShowUsage();
-            } else {
-               if (!options.ValidateOptions()) {
+            }
+            else
+            {
+               if (!options.ValidateOptions())
+               {
                   Utils.SysExit(1);
                }
 
@@ -369,7 +431,8 @@ public class JukeboxMain
                                                        containerPrefix,
                                                        debugMode,
                                                        inUpdateMode);
-                  if (storageSystem == null) {
+                  if (storageSystem == null)
+                  {
                      Console.WriteLine("error: unable to connect to storage system");
                      Utils.SysExit(1);
                   }
@@ -570,7 +633,9 @@ public class JukeboxMain
                }
             }
          }
-      } else {
+      }
+      else
+      {
          Console.WriteLine("Error: no command given");
          ShowUsage();
       }

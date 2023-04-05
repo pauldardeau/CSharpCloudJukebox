@@ -1,16 +1,21 @@
 // ReSharper disable StringLastIndexOfIsCultureSpecific.1
+
+using System.Runtime.InteropServices;
+
 namespace CSharpCloudJukebox;
 
 public class Utils
 {
-   public static string DatetimeDatetimeFromtimestamp(double ts) {
+   public static string DatetimeDatetimeFromtimestamp(double ts)
+   {
       // python datetime.datetime.fromtimestamp
 
-      //TODO: (1) implement (datetime_datetime_fromtimestamp)
+      //TODO: (1) implement (DatetimeDatetimeFromtimestamp)
       return "";
    }
 
-   public static void TimeSleep(int seconds) {
+   public static void TimeSleep(int seconds)
+   {
       // python time.sleep
 
       // Time in hours, minutes, seconds
@@ -18,40 +23,47 @@ public class Utils
       Thread.Sleep(ts);
    }
 
-   public static double TimeTime() {
+   public static double TimeTime()
+   {
       // python time.time
 
       return DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
    }
 
-   public static void SysStdoutWrite(string s) {
+   public static void SysStdoutWrite(string s)
+   {
       // python sys.stdout.write
 
-      //TODO: (2) implement (sys_stdout_write)
+      //TODO: (2) implement (SysStdoutWrite)
    }
  
-   public static void SysStdoutFlush() {
+   public static void SysStdoutFlush()
+   {
       // python: sys.stdout.flush
 
-      //TODO: (2) implement (sys_stdout_flush)
+      //TODO: (2) implement (SysStdoutFlush)
    }
 
-   public static void SysExit(int exitCode) {
+   public static void SysExit(int exitCode)
+   {
       // python: sys.exit
       Environment.Exit(exitCode);
    }
 
-   public static bool PathExists(string path) {
+   public static bool PathExists(string path)
+   {
       // python: os.path.exists
       return File.Exists(path) || Directory.Exists(path);
    }
 
-   public static bool PathIsFile(string path) {
+   public static bool PathIsFile(string path)
+   {
       // python: os.path.isfile
       return File.Exists(path);
    } 
 
-   public static (string root, string ext) PathSplitExt(string path) {
+   public static (string root, string ext) PathSplitExt(string path)
+   {
       // python: os.path.splitext
 
       // splitext("bar") -> ("bar", "")
@@ -63,21 +75,31 @@ public class Utils
       string root = "";
       string ext = "";
 
-      if (path.Length > 0) {
+      if (path.Length > 0)
+      {
          int posLastDot = path.LastIndexOf(".");
-         if (posLastDot == -1) {
+         if (posLastDot == -1)
+         {
             // no '.' exists in path (i.e., "bar")
             root = path;
-         } else {
+         }
+         else
+         {
             // is the last '.' the first character? (i.e., ".cshrc")
-            if (posLastDot == 0) {
+            if (posLastDot == 0)
+            {
                root = path;
-            } else {
+            }
+            else
+            {
                char preceding = path[posLastDot-1];
                // is the preceding char also a '.'? (i.e., "/foo/....jpg")
-               if (preceding == '.') {
+               if (preceding == '.')
+               {
                   root = path;
-               } else {
+               }
+               else
+               {
                   // splitext("foo.bar.exe") -> ("foo.bar", ".exe") 
                   // splitext("/foo/bar.exe") -> ("/foo/bar", ".exe")
                   root = path.Substring(0, posLastDot);
@@ -90,7 +112,8 @@ public class Utils
       return (root, ext);
    }
 
-   public static double PathGetMtime(string path) {
+   public static double PathGetMtime(string path)
+   {
       // python: os.path.getmtime
 
       //SEE: DateTimeOffset.ToUnixTimeSeconds
@@ -100,23 +123,27 @@ public class Utils
       return timeSpan.TotalSeconds;
    }
 
-   public static int GetPid() {
+   public static int GetPid()
+   {
       // python: os.getpid
       return Environment.ProcessId;
    }
 
-   public static long GetFileSize(string pathToFile) {
+   public static long GetFileSize(string pathToFile)
+   {
       // python: os.path.getsize
       FileInfo fi = new FileInfo(pathToFile);
       return fi.Length;
    }
 
-   public static bool OsRename(string existingFile, string newFile) {
+   public static bool OsRename(string existingFile, string newFile)
+   {
       // python: os.rename
       return RenameFile(existingFile, newFile);
    }
 
-   public static bool RenameFile(string existingFile, string newFile) {
+   public static bool RenameFile(string existingFile, string newFile)
+   {
       // python: os.rename
 
       try
@@ -130,9 +157,11 @@ public class Utils
       }
    }
 
-   public static string Md5ForFile(string pathToFile) {
+   public static string Md5ForFile(string pathToFile)
+   {
       byte[] fileBytes = File.ReadAllBytes(pathToFile);
-      if (fileBytes.Length > 0) {
+      if (fileBytes.Length > 0)
+      {
          // Use input string to calculate MD5 hash
          using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
          {
@@ -142,5 +171,33 @@ public class Utils
       }
 
       return "";
+   }
+   
+   public static string GetPlatformIdentifier()
+   {
+      string osIdentifier;
+
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+      {
+         osIdentifier = "linux";
+      }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+      {
+         osIdentifier = "mac";
+      }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+      {
+         osIdentifier = "freebsd";
+      }
+      else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      {
+         osIdentifier = "windows";
+      }
+      else
+      {
+         osIdentifier = "unknown";
+      }
+
+      return osIdentifier;
    }
 }

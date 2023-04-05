@@ -17,18 +17,22 @@ public sealed class SongMetadata
       SongName = songName;
    }
 
-   public override bool Equals(object? o) {
+   public override bool Equals(object? o)
+   {
       if (o == null)
       {
          return false;
       }
-      if (o is SongMetadata other) {
+      if (o is SongMetadata other)
+      {
          return Fm.Equals(other.Fm) &&
                 ArtistUid == other.ArtistUid &&
                 ArtistName == other.ArtistName &&
                 AlbumUid == other.AlbumUid &&
                 SongName == other.SongName;
-      } else {
+      }
+      else
+      {
          return false;
       }
    }
@@ -42,14 +46,16 @@ public sealed class SongMetadata
       return hash;
    }
 
-   public static SongMetadata? FromDictionary(Dictionary<string, object> dictionary, string prefix = "") {
+   public static SongMetadata? FromDictionary(Dictionary<string, object> dictionary, string prefix = "")
+   {
       FileMetadata? fm = FileMetadata.FromDictionary(dictionary, prefix);
       if (fm != null)
       {
          string artistName;
          string songName;
          
-         if (dictionary.ContainsKey(prefix + "artist_name")) {
+         if (dictionary.ContainsKey(prefix + "artist_name"))
+         {
             artistName = (string) dictionary[prefix + "artist_name"];
          }
          else
@@ -57,7 +63,8 @@ public sealed class SongMetadata
             return null;
          }
          
-         if (dictionary.ContainsKey(prefix + "song_name")) {
+         if (dictionary.ContainsKey(prefix + "song_name"))
+         {
             songName = (string) dictionary[prefix + "song_name"];
          }
          else
@@ -66,10 +73,12 @@ public sealed class SongMetadata
          }
          
          SongMetadata sm = new SongMetadata(fm, artistName, songName);
-         if (dictionary.ContainsKey(prefix + "artist_uid")) {
+         if (dictionary.ContainsKey(prefix + "artist_uid"))
+         {
             sm.ArtistUid = (string) dictionary[prefix + "artist_uid"];
          }
-         if (dictionary.ContainsKey(prefix + "album_uid")) {
+         if (dictionary.ContainsKey(prefix + "album_uid"))
+         {
             sm.AlbumUid = (string) dictionary[prefix + "album_uid"];
          }
 
@@ -81,8 +90,10 @@ public sealed class SongMetadata
       }
    }
 
-   public Dictionary<string, object> ToDictionary(string prefix="") {
-      var d = new Dictionary<string, object>() {
+   public Dictionary<string, object> ToDictionary(string prefix="")
+   {
+      var d = new Dictionary<string, object>()
+      {
          {prefix + "fm", Fm.ToDictionary(prefix)},
          {prefix + "artist_uid", ArtistUid},
          {prefix + "artist_name", ArtistName},

@@ -9,42 +9,47 @@ public class JukeboxDb
    private SqliteConnection _dbConnection;
    private string _metadataDbFilePath;
 
-   public JukeboxDb(string metadataDbFilePath, bool debugPrint=true) {
+   public JukeboxDb(string metadataDbFilePath, bool debugPrint=true)
+   {
       _debugPrint = debugPrint;
       _dbIsOpen = false;
-      if (metadataDbFilePath.Length > 0) {
-         _metadataDbFilePath = metadataDbFilePath;
-      } else {
-         _metadataDbFilePath = "jukebox_db.sqlite3";
-      }
-      _dbConnection = new SqliteConnection("Data Source=" + metadataDbFilePath);
+      _metadataDbFilePath = metadataDbFilePath.Length > 0 ? metadataDbFilePath : "jukebox_db.sqlite3";
+      _dbConnection = new SqliteConnection("Data Source=" + _metadataDbFilePath);
    }
 
-   public bool IsOpen() {
+   public bool IsOpen()
+   {
       return _dbIsOpen;
    }
 
-   public bool Open() {
+   public bool Open()
+   {
       Close();
       bool openSuccess;
       _dbConnection.Open();
       _dbIsOpen = true;
-      if (!HaveTables()) {
+      if (!HaveTables())
+      {
          openSuccess = CreateTables();
-         if (!openSuccess) {
+         if (!openSuccess)
+         {
             Console.WriteLine("error: unable to create all tables");
             _dbConnection.Close();
             _dbIsOpen = false;
          }
-      } else {
+      }
+      else
+      {
          openSuccess = true;
       }
       return openSuccess;
    }
 
-   public bool Close() {
+   public bool Close()
+   {
       bool didClose = false;
-      if (_dbIsOpen) {
+      if (_dbIsOpen)
+      {
          _dbConnection.Close();
          _dbIsOpen = false;
          didClose = true;
@@ -52,7 +57,8 @@ public class JukeboxDb
       return didClose;
    }
 
-   private bool CreateTable(string sql) {
+   private bool CreateTable(string sql)
+   {
       SqliteCommand command = _dbConnection.CreateCommand();
       command.CommandText = sql;
       bool tableCreated = false;
@@ -78,9 +84,12 @@ public class JukeboxDb
       return tableCreated;
    }
 
-   private bool CreateTables() {
-      if (_dbIsOpen) {
-         if (_debugPrint) {
+   private bool CreateTables()
+   {
+      if (_dbIsOpen)
+      {
+         if (_debugPrint)
+         {
             Console.WriteLine("creating tables");
          }
 
@@ -133,15 +142,19 @@ public class JukeboxDb
                 CreateTable(createSongTable) &&
                 CreateTable(createPlaylistTable) &&
                 CreateTable(createPlaylistSongTable);
-      } else {
+      }
+      else
+      {
          Console.WriteLine("create_tables: db_is_open is false");
          return false;
       }
    }
 
-   private bool HaveTables() {
+   private bool HaveTables()
+   {
       bool haveTablesInDb = false;
-      if (_dbIsOpen) {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT name
                         FROM sqlite_master
                         WHERE type='table' AND name='song'";
@@ -154,7 +167,8 @@ public class JukeboxDb
                {
                   reader.Read();
                   string name = reader.GetString(0);
-                  if (name.Length > 0) {
+                  if (name.Length > 0)
+                  {
                      haveTablesInDb = true;
                   }
                }
@@ -168,30 +182,12 @@ public class JukeboxDb
 
       return haveTablesInDb;
    }
-
-   public void IdForArtist(string artistName) {
-   }
-
-/*
-    def id_for_album(artist_name: str, album_name: str):
-        pass
-    def insert_artist(artist_name: str):
-        pass
-    def insert_album(album_name: str, artist_id: str):
-        pass
-    def albums_for_artist(artist_id: str):
-        pass
-    def get_artists():
-        pass
-    def songs_for_album(album_id: str):
-        pass
-    def get_playlists():
-        pass
-    */
-
-   public string GetPlaylist(string playlistName) {
+   
+   public string GetPlaylist(string playlistName)
+   {
       string plObject = "";
-      if (playlistName != null && playlistName.Length > 0) {
+      if (playlistName != null && playlistName.Length > 0)
+      {
          string sql = "SELECT playlist_uid FROM playlist WHERE playlist_name = $playlist_name";
          using (var command = _dbConnection.CreateCommand())
          {
@@ -211,7 +207,8 @@ public class JukeboxDb
       return plObject;
    }
 
-   private List<SongMetadata> SongsForQuery(SqliteCommand command) {
+   private List<SongMetadata> SongsForQuery(SqliteCommand command)
+   {
       List<SongMetadata> resultSongs = new List<SongMetadata>();
       try
       {
@@ -236,9 +233,12 @@ public class JukeboxDb
                song.Fm.Md5Hash = reader.GetString(8);
                song.Fm.Compressed = reader.GetInt32(9);
                song.Fm.Encrypted = reader.GetInt32(10);
-               if (!reader.IsDBNull(13)) {
+               if (!reader.IsDBNull(13))
+               {
                   song.AlbumUid = reader.GetString(13);
-               } else {
+               }
+               else
+               {
                   song.AlbumUid = "";
                }
                resultSongs.Add(song);
@@ -253,8 +253,10 @@ public class JukeboxDb
       return resultSongs;
    }
 
-   public SongMetadata? RetrieveSong(string fileName) {
-      if (_dbIsOpen) {
+   public SongMetadata? RetrieveSong(string fileName)
+   {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT song_uid,
                            file_time,
                            origin_file_size,
@@ -276,7 +278,8 @@ public class JukeboxDb
             command.CommandText = sql;
             command.Parameters.AddWithValue("$song_uid", fileName);
             List<SongMetadata> songResults = SongsForQuery(command);
-            if (songResults.Count > 0) {
+            if (songResults.Count > 0)
+            {
                return songResults[0];
             }
          }
@@ -284,10 +287,12 @@ public class JukeboxDb
       return null;
    }
 
-   public bool InsertPlaylist(string plUid, string plName, string plDesc = "") {
+   public bool InsertPlaylist(string plUid, string plName, string plDesc = "")
+   {
       bool insertSuccess = false;
 
-      if (_dbIsOpen && plUid.Length > 0 && plName.Length > 0) {
+      if (_dbIsOpen && plUid.Length > 0 && plName.Length > 0)
+      {
          string sql = "INSERT INTO playlist VALUES ($pl_uid,$pl_name,$pl_desc)";
          using (var command = _dbConnection.CreateCommand())
          {
@@ -310,10 +315,12 @@ public class JukeboxDb
       return insertSuccess;
    }
 
-   public bool DeletePlaylist(string plName) {
+   public bool DeletePlaylist(string plName)
+   {
       bool deleteSuccess = false;
 
-      if (_dbIsOpen && plName.Length > 0) {
+      if (_dbIsOpen && plName.Length > 0)
+      {
          string sql = @"DELETE
                         FROM playlist
                         WHERE playlist_name = $playlist_name";
@@ -336,11 +343,13 @@ public class JukeboxDb
       return deleteSuccess;
    }
 
-   public bool InsertSong(SongMetadata song) {
+   public bool InsertSong(SongMetadata song)
+   {
       bool insertSuccess = false;
 
-      if (_dbIsOpen) {
-         //TODO: (2) fix unidentified column for new song record (insert_song)
+      if (_dbIsOpen)
+      {
+         //TODO: (2) fix unidentified column for new song record (InsertSong)
          string sql = @"INSERT INTO song
                         VALUES ($file_uid,
                                 $file_time,
@@ -388,10 +397,12 @@ public class JukeboxDb
       return insertSuccess;
    }
 
-   public bool UpdateSong(SongMetadata song) {
+   public bool UpdateSong(SongMetadata song)
+   {
       bool updateSuccess = false;
 
-      if (_dbIsOpen && song.Fm != null && song.Fm.FileUid.Length > 0) {
+      if (_dbIsOpen && song.Fm != null && song.Fm.FileUid.Length > 0)
+      {
          string sql = @"UPDATE song
                         SET file_time = $file_time,
                             origin_file_size = $o_file_size,
@@ -440,12 +451,17 @@ public class JukeboxDb
       return updateSuccess;
    }
 
-   public bool StoreSongMetadata(SongMetadata song) {
+   public bool StoreSongMetadata(SongMetadata song)
+   {
       SongMetadata? dbSong = RetrieveSong(song.Fm.FileUid);
-      if (dbSong != null) {
-         if (!song.Equals(dbSong)) {
+      if (dbSong != null)
+      {
+         if (!song.Equals(dbSong))
+         {
             return UpdateSong(song);
-         } else {
+         }
+         else
+         {
             return true;  // no insert or update needed (already up-to-date)
          }
       } else {
@@ -454,24 +470,22 @@ public class JukeboxDb
       }
    }
 
-   private string SqlWhereClause(bool usingEncryption = false,
-                                 bool usingCompression = false) {
+   private string SqlWhereClause(bool usingEncryption = false)
+   {
       string encryption = usingEncryption ? "1" : "0";
-      string compression = usingCompression ? "1" : "0";
 
       string whereClause = "";
       whereClause += " WHERE ";
       whereClause += "encrypted = ";
       whereClause += encryption;
-      whereClause += " AND ";
-      whereClause += "compressed = ";
-      whereClause += compression;
       return whereClause;
    }
 
-   public List<SongMetadata> RetrieveSongs(string artist, string album="") {
+   public List<SongMetadata> RetrieveAlbumSongs(string artist, string album="")
+   {
       List<SongMetadata> songs = new List<SongMetadata>();
-      if (_dbIsOpen) {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT song_uid,
                            file_time,
                            origin_file_size,
@@ -488,12 +502,18 @@ public class JukeboxDb
                            album_uid
                         FROM song";
          sql += SqlWhereClause();
-         //if len(artist) > 0:
-         //    sql += " AND artist_name='%s'" % artist
-         if (album.Length > 0) {
-             string encodedArtist = Jukebox.EncodeValue(artist);
-             string encodedAlbum = Jukebox.EncodeValue(album);
-             sql += " AND object_name LIKE '{encodedArtist}--{encodedAlbum}%'";
+         if (artist.Length > 0)
+         {
+            string encodedArtist = JbUtils.EncodeValue(artist);
+            if (album.Length > 0)
+            {
+               string encodedAlbum = JbUtils.EncodeValue(album);
+               sql += string.Format(" AND object_name LIKE '{0}--{1}%'", encodedArtist, encodedAlbum);
+            }
+            else
+            {
+               sql += string.Format(" AND object_name LIKE '{0}--%'", encodedArtist);
+            }
          }
          using (var command = _dbConnection.CreateCommand())
          {
@@ -504,9 +524,11 @@ public class JukeboxDb
       return songs;
    }
 
-   public List<SongMetadata> SongsForArtist(string artistName) {
+   public List<SongMetadata> SongsForArtist(string artistName)
+   {
       List<SongMetadata> songs = new List<SongMetadata>();
-      if (_dbIsOpen) {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT song_uid,
                            file_time,
                            origin_file size,
@@ -534,8 +556,10 @@ public class JukeboxDb
       return songs;
    }
 
-   public void ShowListings() {
-      if (_dbIsOpen) {
+   public void ShowListings()
+   {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT artist_name, song_name
                         FROM song
                         ORDER BY artist_name, song_name";
@@ -563,8 +587,10 @@ public class JukeboxDb
       }
    }
 
-   public void ShowArtists() {
-      if (_dbIsOpen) {
+   public void ShowArtists()
+   {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT DISTINCT artist_name
                         FROM song
                         ORDER BY artist_name";
@@ -591,8 +617,10 @@ public class JukeboxDb
       }
    }
 
-   public void ShowGenres() {
-      if (_dbIsOpen) {
+   public void ShowGenres()
+   {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT genre_name
                         FROM genre
                         ORDER BY genre_name";
@@ -619,12 +647,15 @@ public class JukeboxDb
       }
    }
 
-   public void ShowArtistAlbums(string artistName) {
+   public void ShowArtistAlbums(string artistName)
+   {
       //TODO: (3) implement (ShowArtistAlbums)
    }
 
-   public void ShowAlbums() {
-      if (_dbIsOpen) {
+   public void ShowAlbums()
+   {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT album.album_name, artist.artist_name
                         FROM album, artist
                         WHERE album.artist_uid = artist.artist_uid
@@ -653,8 +684,10 @@ public class JukeboxDb
       }
    }
 
-   public void ShowPlaylists() {
-      if (_dbIsOpen) {
+   public void ShowPlaylists()
+   {
+      if (_dbIsOpen)
+      {
          string sql = @"SELECT playlist_uid, playlist_name
                         FROM playlist
                         ORDER BY playlist_uid";
@@ -682,10 +715,13 @@ public class JukeboxDb
       }
    }
 
-   public bool DeleteSong(string songUid) {
+   public bool DeleteSong(string songUid)
+   {
       bool wasDeleted = false;
-      if (_dbIsOpen) {
-         if (songUid.Length > 0) {
+      if (_dbIsOpen)
+      {
+         if (songUid.Length > 0)
+         {
             string sql = "DELETE FROM song WHERE song_uid = $songUid";
             using (var command = _dbConnection.CreateCommand())
             {

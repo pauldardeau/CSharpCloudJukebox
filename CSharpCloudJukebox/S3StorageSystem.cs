@@ -15,24 +15,30 @@ public class S3StorageSystem : StorageSystem
                           string awsSecretKey,
                           string containerPrefix,
                           bool debugMode=true) :
-      base("S3", debugMode) {
+      base("S3", debugMode)
+   {
       _debugMode = debugMode;
       _awsAccessKey = awsAccessKey;
       _awsSecretKey = awsSecretKey;
       _conn = null;
-      if (debugMode) {
+      if (debugMode)
+      {
          Console.WriteLine("Using access_key={0}, secret_key={1}", awsAccessKey, awsSecretKey);
       }
-      if (containerPrefix.Length > 0) {
-         if (debugMode) {
+      if (containerPrefix.Length > 0)
+      {
+         if (debugMode)
+         {
             Console.WriteLine("using containerPrefix={0}", containerPrefix);
          }
-         this.ContainerPrefix = containerPrefix;
+         ContainerPrefix = containerPrefix;
       }
    }
 
-   public override bool Enter() {
-      if (_debugMode) {
+   public override bool Enter()
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("S3StorageSystem.enter");
          Console.WriteLine("attempting to connect to S3");
       }
@@ -48,13 +54,17 @@ public class S3StorageSystem : StorageSystem
       return true;
    }
 
-   public override void Exit() {
-      if (_debugMode) {
+   public override void Exit()
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("S3StorageSystem.exit");
       }
 
-      if (_conn != null) {
-         if (_debugMode) {
+      if (_conn != null)
+      {
+         if (_debugMode)
+         {
             Console.WriteLine("closing S3 connection object");
          }
 
@@ -65,7 +75,8 @@ public class S3StorageSystem : StorageSystem
       }
    }
 
-   private void LogApiCall(HttpStatusCode code, string apiCall) {
+   private void LogApiCall(HttpStatusCode code, string apiCall)
+   {
       if (!_debugMode)
       {
          return;
@@ -74,7 +85,8 @@ public class S3StorageSystem : StorageSystem
       int statusCode = 0;
       string statusText = "";
 
-      switch (code) {
+      switch (code)
+      {
          case HttpStatusCode.Accepted:
             statusCode = 202;
             statusText = "Accepted";
@@ -321,7 +333,8 @@ public class S3StorageSystem : StorageSystem
             break;
       }
 
-      if (statusCode > 0 && statusText.Length > 0) {
+      if (statusCode > 0 && statusText.Length > 0)
+      {
          Console.WriteLine("S3 {0} {1} - {2}", statusCode, statusText, apiCall);
       }
    }
@@ -333,14 +346,17 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
 
-   public override List<string> ListAccountContainers() {
-      if (_debugMode) {
+   public override List<string> ListAccountContainers()
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("list_account_containers");
       }
 
       List<string> listContainerNames = new List<string>();
 
-      if (_conn != null) {
+      if (_conn != null)
+      {
          var listResponse = DoListAccountContainers(_conn);
          LogApiCall(listResponse.HttpStatusCode, "ListBuckets");
 
@@ -364,20 +380,24 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
 
-   public override bool CreateContainer(string containerName) {
-      if (_debugMode) {
+   public override bool CreateContainer(string containerName)
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("create_container: {0}", containerName);
       }
 
       bool containerCreated = false;
-      if (_conn != null) {
+      if (_conn != null)
+      {
          try
          {
             PutBucketRequest request = new PutBucketRequest();
             request.BucketName = containerName;
             var putBucketResponse = DoCreateContainer(_conn, request);
             LogApiCall(putBucketResponse.HttpStatusCode, "PutBucket: " + containerName);
-            if (putBucketResponse.HttpStatusCode == HttpStatusCode.OK) {
+            if (putBucketResponse.HttpStatusCode == HttpStatusCode.OK)
+            {
                AddContainer(containerName);
                containerCreated = true;
             }
@@ -399,13 +419,16 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
  
-   public override bool DeleteContainer(string containerName) {
-      if (_debugMode) {
+   public override bool DeleteContainer(string containerName)
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("delete_container: {0}", containerName);
       }
 
       bool containerDeleted = false;
-      if (_conn != null) {
+      if (_conn != null)
+      {
          try
          {
             string bucketName = PrefixedContainer(containerName);
@@ -414,7 +437,8 @@ public class S3StorageSystem : StorageSystem
             var deleteResponse = DoDeleteContainer(_conn, request);
             LogApiCall(deleteResponse.HttpStatusCode, "DeleteBucket: " + bucketName);
 
-            if (deleteResponse.HttpStatusCode == HttpStatusCode.OK) {
+            if (deleteResponse.HttpStatusCode == HttpStatusCode.OK)
+            {
                RemoveContainer(containerName);
                containerDeleted = true;
             }
@@ -436,21 +460,25 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
 
-   public override List<string> ListContainerContents(string containerName) {
-      if (_debugMode) {
+   public override List<string> ListContainerContents(string containerName)
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("list_container_contents: {0}", containerName);
       }
 
       List<string> listContents = new List<string>();
 
-      if (_conn != null) {
+      if (_conn != null)
+      {
          try
          {
             ListObjectsRequest request = new ListObjectsRequest();
             request.BucketName = containerName;
             var listResponse = DoListContainerContents(_conn, request);
             LogApiCall(listResponse.HttpStatusCode, "ListObjects: " + containerName);
-            if (listResponse.HttpStatusCode == HttpStatusCode.OK) {
+            if (listResponse.HttpStatusCode == HttpStatusCode.OK)
+            {
                foreach (S3Object obj in listResponse.S3Objects)
                {
                   listContents.Add(obj.Key);
@@ -475,18 +503,22 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
 
-   public override PropertySet? GetObjectMetadata(string containerName, string objectName) {
-      if (_debugMode) {
+   public override PropertySet? GetObjectMetadata(string containerName, string objectName)
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("GetObjectMetadata: container={0}, object={1}", containerName, objectName);
       }
 
-      if (_conn != null && containerName.Length > 0 && objectName.Length > 0) {
+      if (_conn != null && containerName.Length > 0 && objectName.Length > 0)
+      {
          try
          {
             var getObjectMetadataResponse = DoGetObjectMetadata(_conn, containerName, objectName);
             LogApiCall(getObjectMetadataResponse.HttpStatusCode, "GetObjectMetadata: " + containerName + ":" + objectName);
 
-            if (getObjectMetadataResponse.HttpStatusCode == HttpStatusCode.OK) {
+            if (getObjectMetadataResponse.HttpStatusCode == HttpStatusCode.OK)
+            {
                PropertySet props = new PropertySet();
                foreach (var headerKey in getObjectMetadataResponse.Headers.Keys)
                {
@@ -519,24 +551,28 @@ public class S3StorageSystem : StorageSystem
    public override bool PutObject(string containerName,
                                   string objectName,
                                   byte[] fileContents,
-                                  PropertySet? props) {
-
+                                  PropertySet? props)
+   {
       bool objectAdded = false;
 
-      if (_conn != null && containerName.Length > 0 && objectName.Length > 0) {
+      if (_conn != null && containerName.Length > 0 && objectName.Length > 0)
+      {
          try
          {
             PutObjectRequest request = new PutObjectRequest();
             request.BucketName = containerName;
             request.Key = objectName;
             request.InputStream = new MemoryStream(fileContents);
-            //request.Headers = ;  //TODO: (2) add headers (put_object)
+            //request.Headers = ;  //TODO: (2) add headers (PutObject)
 
             /*
-            if (headers != null) {
-               if (headers.ContainsKey("ContentType")) {
+            if (headers != null)
+            {
+               if (headers.ContainsKey("ContentType"))
+               {
                   string contentType = (string) headers["ContentType"];
-                  if (contentType != null && contentType.Length > 0) {
+                  if (contentType != null && contentType.Length > 0)
+                  {
                      request.ContentType = contentType;
                   }
                }
@@ -545,7 +581,8 @@ public class S3StorageSystem : StorageSystem
             
             var putObjectResponse = DoPutObject(_conn, request);
             LogApiCall(putObjectResponse.HttpStatusCode, "PutObject: " + containerName + ":" + objectName);
-            if (putObjectResponse.HttpStatusCode == HttpStatusCode.OK) {
+            if (putObjectResponse.HttpStatusCode == HttpStatusCode.OK)
+            {
                objectAdded = true;
             }
          }
@@ -566,14 +603,17 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
 
-   public override bool DeleteObject(string containerName, string objectName) {
-      if (_debugMode) {
+   public override bool DeleteObject(string containerName, string objectName)
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("delete_object: container={0}, object={1}", containerName, objectName);
       }
 
       bool objectDeleted = false;
 
-      if (_conn != null && containerName.Length > 0 && objectName.Length > 0) {
+      if (_conn != null && containerName.Length > 0 && objectName.Length > 0)
+      {
          try
          {
             DeleteObjectRequest request = new DeleteObjectRequest();
@@ -600,8 +640,10 @@ public class S3StorageSystem : StorageSystem
       return task.Result;
    }
 
-   public override long GetObject(string containerName, string objectName, string localFilePath) {
-      if (_debugMode) {
+   public override long GetObject(string containerName, string objectName, string localFilePath)
+   {
+      if (_debugMode)
+      {
          Console.WriteLine("get_object: container={0}, object={1}, local_file_path={2}", containerName,
                                                                                          objectName,
                                                                                          localFilePath);
@@ -609,9 +651,8 @@ public class S3StorageSystem : StorageSystem
 
       long bytesRetrieved = 0;
 
-      if (_conn != null && containerName.Length > 0 &&
-          objectName.Length > 0 && localFilePath.Length > 0) {
-
+      if (_conn != null && containerName.Length > 0 && objectName.Length > 0 && localFilePath.Length > 0)
+      {
          try
          {
             GetObjectRequest request = new GetObjectRequest();
@@ -619,7 +660,8 @@ public class S3StorageSystem : StorageSystem
             request.Key = objectName;
             var getObjectResponse = DoGetObject(_conn, request);
             LogApiCall(getObjectResponse.HttpStatusCode, "GetObject: " + containerName + ":" + objectName);
-            if (getObjectResponse.HttpStatusCode == HttpStatusCode.OK) {
+            if (getObjectResponse.HttpStatusCode == HttpStatusCode.OK)
+            {
                // AWS SDK BUG: according to Amazon's docs, the following should
                // work, but it's a compilation error.
                //getObjectResponse.WriteResponseStreamToFile(local_file_path);
@@ -630,7 +672,8 @@ public class S3StorageSystem : StorageSystem
                   getObjectResponse.ResponseStream.CopyTo(outStream);
                }
 
-               if (Utils.PathExists(localFilePath)) {
+               if (Utils.PathExists(localFilePath))
+               {
                   bytesRetrieved = Utils.GetFileSize(localFilePath);
                }
             }
