@@ -44,7 +44,12 @@ public class HttpServer
          return;
       }
 
-      string[] prefixes = { "http://127.0.0.1:5309" };
+      int portNumber = 5309;
+
+      string localHostPrefix = string.Format("http://127.0.0.1:{0}", portNumber);
+      string ipHostPrefix = string.Format("http://{0}:{1}", Utils.GetLocalIpAddress(), portNumber);
+
+      string[] prefixes = { localHostPrefix, ipHostPrefix };
       string[] endpoints = { EndPointSongAdvance, EndPointTogglePausePlay, EndPointApiInfo, EndPointApiMemoryUsage };
       
       // URI prefixes are required,
@@ -53,97 +58,98 @@ public class HttpServer
       {
          throw new ArgumentException("prefixes");
       }
-      
-      HttpListener listener = new HttpListener();
 
-      try
+      using (var listener = new HttpListener())
       {
-         foreach (string s in prefixes)
+         try
          {
-            foreach (string e in endpoints)
+            foreach (string s in prefixes)
             {
-               string prefix = s + e;
-               listener.Prefixes.Add(prefix);
+               foreach (string e in endpoints)
+               {
+                  string prefix = s + e;
+                  listener.Prefixes.Add(prefix);
+               }
+            }
+      
+            listener.Start();
+            Console.WriteLine("Http server listening...");
+
+            while (!_jukebox.ExitRequested)
+            {
+               // GetContext blocks while waiting for a request
+               HttpListenerContext context = listener.GetContext();
+            
+               if (_jukebox.ExitRequested)
+               {
+                  continue;
+               }
+            
+               HttpListenerRequest request = context.Request;
+               HttpListenerResponse response = context.Response;
+
+               string responseBody = "Server error";
+
+               string? endpoint = request.RawUrl;
+               if (endpoint != null)
+               {
+                  if (endpoint == EndPointSongAdvance)
+                  {
+                     _jukebox.AdvanceToNextSong();
+                     responseBody = "advanced to next song";
+                  }
+                  else if (endpoint == EndPointTogglePausePlay)
+                  {
+                     _jukebox.TogglePausePlay();
+                     responseBody = "toggled pause/play";
+                  }
+                  else if (endpoint == EndPointApiInfo)
+                  {
+                     JukeboxInfo jukeInfo = new JukeboxInfo();
+                     jukeInfo.NumberSongs = _jukebox.GetNumberSongs();
+                     jukeInfo.CurrentArtist = _jukebox.CurrentArtist;
+                     jukeInfo.CurrentAlbum = _jukebox.CurrentAlbum;
+                     jukeInfo.CurrentSong = _jukebox.CurrentSong;
+                     jukeInfo.CurrentObject = _jukebox.CurrentObject;
+                     jukeInfo.ScopeArtist = _jukebox.ScopeArtist;
+                     jukeInfo.ScopeAlbum = _jukebox.ScopeAlbum;
+                     jukeInfo.ScopePlaylist = _jukebox.ScopePlaylist;
+                     jukeInfo.IsPaused = _jukebox.IsPaused();
+                     jukeInfo.SongSecondsOffset = _jukebox.GetSongSecondsOffset();
+                     jukeInfo.AlbumArtUrl = _jukebox.AlbumArtUrl;
+                     responseBody = JsonSerializer.Serialize(jukeInfo);
+                  }
+                  else if (endpoint == EndPointApiMemoryUsage)
+                  {
+                     MemoryUsage memUsage = new MemoryUsage();
+                     memUsage.MemoryUseMegabytes = _jukebox.GetMemoryInUse();
+                     responseBody = JsonSerializer.Serialize(memUsage);
+                  }
+                  else
+                  {
+                     responseBody = "Hello world!";
+                  }
+               }
+
+               string responseString = string.Format("<HTML><BODY>{0}</BODY></HTML>", responseBody);
+               byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+               response.ContentLength64 = buffer.Length;
+               Stream output = response.OutputStream;
+               try
+               {
+                  output.Write(buffer,0,buffer.Length);
+               }
+               finally
+               {
+                  output.Close();
+               }
             }
          }
-      
-         listener.Start();
-         Console.WriteLine("Http server listening...");
-
-         while (!_jukebox.ExitRequested)
+         finally
          {
-            // GetContext blocks while waiting for a request
-            HttpListenerContext context = listener.GetContext();
-            
-            if (_jukebox.ExitRequested)
-            {
-               continue;
-            }
-            
-            HttpListenerRequest request = context.Request;
-            HttpListenerResponse response = context.Response;
-
-            string responseBody = "Server error";
-
-            string? endpoint = request.RawUrl;
-            if (endpoint != null)
-            {
-               if (endpoint == EndPointSongAdvance)
-               {
-                  _jukebox.AdvanceToNextSong();
-                  responseBody = "advanced to next song";
-               }
-               else if (endpoint == EndPointTogglePausePlay)
-               {
-                  _jukebox.TogglePausePlay();
-                  responseBody = "toggled pause/play";
-               }
-               else if (endpoint == EndPointApiInfo)
-               {
-                  JukeboxInfo jukeInfo = new JukeboxInfo();
-                  jukeInfo.NumberSongs = _jukebox.GetNumberSongs();
-                  jukeInfo.CurrentArtist = _jukebox.CurrentArtist;
-                  jukeInfo.CurrentAlbum = _jukebox.CurrentAlbum;
-                  jukeInfo.CurrentSong = _jukebox.CurrentSong;
-                  jukeInfo.CurrentObject = _jukebox.CurrentObject;
-                  jukeInfo.ScopeArtist = _jukebox.ScopeArtist;
-                  jukeInfo.ScopeAlbum = _jukebox.ScopeAlbum;
-                  jukeInfo.ScopePlaylist = _jukebox.ScopePlaylist;
-                  jukeInfo.IsPaused = _jukebox.IsPaused();
-                  jukeInfo.SongSecondsOffset = _jukebox.GetSongSecondsOffset();
-                  jukeInfo.AlbumArtUrl = _jukebox.AlbumArtUrl;
-                  responseBody = JsonSerializer.Serialize(jukeInfo);
-               }
-               else if (endpoint == EndPointApiMemoryUsage)
-               {
-                  MemoryUsage memUsage = new MemoryUsage();
-                  memUsage.MemoryUseMegabytes = _jukebox.GetMemoryInUse();
-                  responseBody = JsonSerializer.Serialize(memUsage);
-               }
-               else
-               {
-                  responseBody = "Hello world!";
-               }
-            }
-
-            string responseString = string.Format("<HTML><BODY>{0}</BODY></HTML>", responseBody);
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            response.ContentLength64 = buffer.Length;
-            Stream output = response.OutputStream;
-            try
-            {
-               output.Write(buffer,0,buffer.Length);
-            }
-            finally
-            {
-               output.Close();
-            }
+            listener.Stop();
+            Console.WriteLine("http server ended");
          }
-      }
-      finally
-      {
-         listener.Stop();
-         Console.WriteLine("http server ended");
       }
    }
 }

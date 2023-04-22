@@ -9,29 +9,26 @@ public class S3StorageSystem : StorageSystem
    private readonly bool _debugMode;
    private readonly string _awsAccessKey;
    private readonly string _awsSecretKey;
+   private readonly string _endpointUrl;
+   private readonly string _region;
    private AmazonS3Client? _conn;
 
    public S3StorageSystem(string awsAccessKey,
                           string awsSecretKey,
-                          string containerPrefix,
+                          string endpointUrl,
+                          string region,
                           bool debugMode=true) :
       base("S3", debugMode)
    {
       _debugMode = debugMode;
       _awsAccessKey = awsAccessKey;
       _awsSecretKey = awsSecretKey;
+      _endpointUrl = endpointUrl;
+      _region = region;
       _conn = null;
       if (debugMode)
       {
          Console.WriteLine("Using access_key={0}, secret_key={1}", awsAccessKey, awsSecretKey);
-      }
-      if (containerPrefix.Length > 0)
-      {
-         if (debugMode)
-         {
-            Console.WriteLine("using containerPrefix={0}", containerPrefix);
-         }
-         ContainerPrefix = containerPrefix;
       }
    }
 
@@ -44,7 +41,7 @@ public class S3StorageSystem : StorageSystem
       }
 
       AmazonS3Config config = new AmazonS3Config();
-      config.ServiceURL = "https://s3.us-central-1.wasabisys.com";
+      config.ServiceURL = _endpointUrl;
 
       _conn = new AmazonS3Client(_awsAccessKey,
                                  _awsSecretKey,
@@ -578,7 +575,7 @@ public class S3StorageSystem : StorageSystem
                }
             }
             */
-            
+
             var putObjectResponse = DoPutObject(_conn, request);
             LogApiCall(putObjectResponse.HttpStatusCode, "PutObject: " + containerName + ":" + objectName);
             if (putObjectResponse.HttpStatusCode == HttpStatusCode.OK)
@@ -658,23 +655,25 @@ public class S3StorageSystem : StorageSystem
             GetObjectRequest request = new GetObjectRequest();
             request.BucketName = containerName;
             request.Key = objectName;
-            var getObjectResponse = DoGetObject(_conn, request);
-            LogApiCall(getObjectResponse.HttpStatusCode, "GetObject: " + containerName + ":" + objectName);
-            if (getObjectResponse.HttpStatusCode == HttpStatusCode.OK)
+            using (var getObjectResponse = DoGetObject(_conn, request))
             {
-               // AWS SDK BUG: according to Amazon's docs, the following should
-               // work, but it's a compilation error.
-               //getObjectResponse.WriteResponseStreamToFile(local_file_path);
-
-               // Workaround: we'll do the same thing ourselves
-               using(Stream outStream = File.OpenWrite(localFilePath))
+               LogApiCall(getObjectResponse.HttpStatusCode, "GetObject: " + containerName + ":" + objectName);
+               if (getObjectResponse.HttpStatusCode == HttpStatusCode.OK)
                {
-                  getObjectResponse.ResponseStream.CopyTo(outStream);
-               }
+                  // AWS SDK BUG: according to Amazon's docs, the following should
+                  // work, but it's a compilation error.
+                  //getObjectResponse.WriteResponseStreamToFile(local_file_path);
 
-               if (Utils.PathExists(localFilePath))
-               {
-                  bytesRetrieved = Utils.GetFileSize(localFilePath);
+                  // Workaround: we'll do the same thing ourselves
+                  using(Stream outStream = File.OpenWrite(localFilePath))
+                  {
+                     getObjectResponse.ResponseStream.CopyTo(outStream);
+                  }
+
+                  if (Utils.PathExists(localFilePath))
+                  {
+                     bytesRetrieved = Utils.GetFileSize(localFilePath);
+                  }
                }
             }
          }

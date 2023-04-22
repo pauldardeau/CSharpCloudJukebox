@@ -17,6 +17,7 @@ public class Jukebox
    private readonly StorageSystem _storageSystem;
    private readonly bool _debugPrint;
    private JukeboxDb? _jukeboxDb;
+   private readonly string _containerPrefix;
    private readonly string _currentDir;
    private readonly string _songImportDir;
    private readonly string _playlistImportDir;
@@ -57,20 +58,57 @@ public class Jukebox
    private static async void SignalHandler(object? sender, ConsoleCancelEventArgs args)
    {
       args.Cancel = true;
-      Console.WriteLine(" Ctrl-C received! Shutting down.");
+      Console.WriteLine(" Ctrl-C detected, shutting down");
 
       if (_gJukeboxInstance != null)
       {
-         _gJukeboxInstance.ExitRequested = true;
+         _gJukeboxInstance.PrepareForTermination();
+         
+         // wake up the http server thread
+         using var client = new HttpClient();
+         var result = await client.GetAsync("http://127.0.0.1:5309/api/memoryUsage/");
+         Thread.Sleep(2000);
       }
-      
-      // wake up the http server thread
-      using var client = new HttpClient();
-      var result = await client.GetAsync("http://127.0.0.1:5309/api/memoryUsage/");
-      Thread.Sleep(2000);
    }
 
-   public Jukebox(JukeboxOptions jbOptions, StorageSystem storageSys, bool debugPrint = false)
+   public static bool InitializeStorageSystem(StorageSystem storageSys, string containerPrefix)
+   {
+      // create the containers that will hold songs
+      string artistSongChars = "0123456789abcdefghijklmnopqrstuvwxyz";
+
+      foreach (char ch in artistSongChars)
+      {
+         string containerName = containerPrefix + string.Format("{0}-artist-songs", ch);
+         if (!storageSys.CreateContainer(containerName))
+         {
+            Console.WriteLine("error: unable to create container '{0}'", containerName);
+            return false;
+         }
+      }
+
+      // create the other (non-song) containers
+      string[] containerNames = {"music-metadata", "album-art", "albums", "playlists"};
+
+      foreach (string containerName in containerNames)
+      {
+         string cnrName = containerPrefix + containerName;
+         if (!storageSys.CreateContainer(cnrName))
+         {
+            Console.WriteLine("error: unable to create container '{0}'", cnrName);
+            return false;
+         }
+      }
+
+      // delete metadata DB file if present
+      if (Utils.FileExists("jukebox_db.sqlite3"))
+      {
+         Utils.DeleteFile("jukebox_db.sqlite3");
+      }
+
+      return true;
+   }
+
+   public Jukebox(JukeboxOptions jbOptions, StorageSystem storageSys, string containerPrefix, bool debugPrint = false)
    {
       Jukebox._gJukeboxInstance = this;
 
@@ -78,6 +116,7 @@ public class Jukebox
       _storageSystem = storageSys;
       _debugPrint = debugPrint;
       _jukeboxDb = null;
+      _containerPrefix = containerPrefix;
       _currentDir = Directory.GetCurrentDirectory();
       _songImportDir = Path.Join(_currentDir, "song-import");
       _playlistImportDir = Path.Join(_currentDir, "playlist-import");
@@ -85,10 +124,10 @@ public class Jukebox
       _albumArtImportDir = Path.Join(_currentDir, "album-art-import");
       _downloadExtension = ".download";
       _metadataDbFile = "jukebox_db.sqlite3";
-      _metadataContainer = "music-metadata";
-      _playlistContainer = "cj-playlists";
-      _albumContainer = "cj-albums";
-      _albumArtContainer = "album-art";
+      _metadataContainer = containerPrefix + "music-metadata";
+      _playlistContainer = containerPrefix + "playlists";
+      _albumContainer = containerPrefix + "albums";
+      _albumArtContainer = containerPrefix + "album-art";
       _songList = new List<SongMetadata>();
       _numberSongs = 0;
       _songIndex = -1;
@@ -122,7 +161,7 @@ public class Jukebox
       }
    }
 
-   public void Enter()
+   public bool Enter()
    {
       if (_debugPrint)
       {
@@ -173,6 +212,8 @@ public class Jukebox
                {
                   Console.WriteLine("error: unable to retrieve metadata DB file");
                }
+
+               return false;
             }
          }
          else
@@ -181,6 +222,8 @@ public class Jukebox
             {
                Console.WriteLine("error: no metadata DB file in metadata container");
             }
+
+            return false;
          }
       }
       else
@@ -189,13 +232,18 @@ public class Jukebox
          {
             Console.WriteLine("error: no metadata container in storage system");
          }
+
+         return false;
       }
 
       _jukeboxDb = new JukeboxDb(GetMetadataDbFilePath());
       if (!_jukeboxDb.Open())
       {
          Console.WriteLine("error: unable to connect to database");
+         return false;
       }
+
+      return true;
    }
 
    public void Exit()
@@ -215,6 +263,15 @@ public class Jukebox
       }
    }
 
+   protected void KillAudioPlayerProcess()
+   {
+      if (_audioPlayerProcess != null)
+      {
+         _audioPlayerProcess.Kill();
+         _audioPlayerProcess = null;
+      }
+   }
+
    public void TogglePausePlay()
    {
       _isPaused = !_isPaused;
@@ -224,7 +281,7 @@ public class Jukebox
          if (_audioPlayerProcess != null)
          {
             // capture current song position (seconds into song)
-            _audioPlayerProcess.Kill();
+            KillAudioPlayerProcess();
          }
       }
       else
@@ -237,11 +294,17 @@ public class Jukebox
    public void AdvanceToNextSong()
    {
       Console.WriteLine("advancing to next song");
-      if (_audioPlayerProcess != null)
-      {
-         _audioPlayerProcess.Kill();
-         _songPlayIsResume = false;
-      }
+      KillAudioPlayerProcess();
+      _songPlayIsResume = false;
+   }
+
+   public void PrepareForTermination()
+   {
+      // indicate that it's time to shut down
+      ExitRequested = true;
+
+      // terminate audio player if it's running
+      KillAudioPlayerProcess();
    }
 
    private string GetMetadataDbFilePath()
@@ -363,44 +426,12 @@ public class Jukebox
       return success;
    }
 
-   public void GetEncryptor()
-   {
-      //TODO: (3) encryption (GetEncryptor)
-      // key_block_size = 16  // AES-128
-      // key_block_size = 24  // AES-192
-      //int key_block_size = 32;  // AES-256
-      //return AESBlockEncryption(key_block_size,
-      //                          jukebox_options.encryption_key,
-      //                          jukebox_options.encryption_iv);
-   }
-
-   private string GetContainerSuffix()
-   {
-      string suffix = "";
-      if (_jukeboxOptions.UseEncryption)
-      {
-         suffix += "-e";
-      }
-      return suffix;
-   }
-
-   private string ObjectFileSuffix()
-   {
-      string suffix = "";
-      if (_jukeboxOptions.UseEncryption)
-      {
-         suffix = ".e";
-      }
-      return suffix;
-   }
-
    private string ContainerForSong(string songUid)
    {
       if (songUid.Length == 0)
       {
          return "";
       }
-      string containerSuffix = "-artist-songs" + GetContainerSuffix();
 
       string artist = ArtistFromFileName(songUid);
       string artistLetter;
@@ -417,7 +448,7 @@ public class Jukebox
          artistLetter = artist.Substring(0, 1);
       }
 
-      return artistLetter.ToLower() + containerSuffix;
+      return _containerPrefix + artistLetter.ToLower() + "-artist-songs";
    }
 
    public void ImportSongs()
@@ -443,16 +474,6 @@ public class Jukebox
             Utils.SysStdoutWrite(bar);  // return to start of line, after '['
          }
 
-         //TODO: (3) encryption support (ImportSongs)
-         //if (jukebox_options != null && jukebox_options.use_encryption)
-         //{
-         //   encryption = GetEncryptor();
-         //}
-         //else
-         //{
-         //   encryption = null;
-         //}
-
          double cumulativeUploadTime = 0.0;
          int cumulativeUploadBytes = 0;
          int fileImportCount = 0;
@@ -474,14 +495,14 @@ public class Jukebox
                   string song = SongFromFileName(fileName);
                   if (fileSize > 0 && artist.Length > 0 && album.Length > 0 && song.Length > 0)
                   {
-                     string objectName = fileName + ObjectFileSuffix();
+                     string objectName = fileName;
                      FileMetadata fm = new FileMetadata(objectName, ContainerForSong(fileName), objectName);
                      SongMetadata fsSong = new SongMetadata(fm, artist, song);
                      fsSong.AlbumUid = "";
                      fsSong.Fm.OriginFileSize = (int) fileSize;
                      fsSong.Fm.FileTime = Utils.DatetimeDatetimeFromtimestamp(Utils.PathGetMtime(fullPath));
                      fsSong.Fm.Md5Hash = Utils.Md5ForFile(fullPath);
-                     fsSong.Fm.Encrypted = _jukeboxOptions.UseEncryption ? 1 : 0;
+                     fsSong.Fm.Encrypted = 0;
                      fsSong.Fm.PadCharCount = 0;
 
                      // read file contents
@@ -500,38 +521,14 @@ public class Jukebox
 
                      if (fileRead && fileContents != null)
                      {
-                        if (_jukeboxOptions.UseEncryption)
-                        {
-                           if (_debugPrint)
-                           {
-                              Console.WriteLine("encrypting file");
-                           }
-
-                           //TODO: (3) encryption (ImportSongs)
-
-                           // the length of the data to encrypt must be a multiple of 16
-                           //num_extra_chars = fileContents.Length % 16;
-                           //if (num_extra_chars > 0)
-                           //{
-                           //   if (_debugPrint)
-                           //   {
-                           //      Console.WriteLine("padding file for encryption");
-                           //   }
-                           //   num_pad_chars = 16 - num_extra_chars;
-                           //   file_contents += "".ljust(num_pad_chars, ' ');
-                           //   fs_song.fm.pad_char_count = num_pad_chars;
-                           //}
-
-                           //fileContents = encryption.encrypt(fileContents);
-                        }
-
                         // now that we have the data that will be stored, set the file size for
                         // what's being stored
                         fsSong.Fm.StoredFileSize = fileContents.Length;
                         double startUploadTime = Utils.TimeTime();
+                        string containerName = _containerPrefix + fsSong.Fm.ContainerName;
 
                         // store song file to storage system
-                        if (_storageSystem.PutObject(fsSong.Fm.ContainerName,
+                        if (_storageSystem.PutObject(containerName,
                                                      fsSong.Fm.ObjectName,
                                                      fileContents,
                                                      null))
@@ -550,8 +547,7 @@ public class Jukebox
                               // since we can't store the song metadata locally.
                               Console.WriteLine("unable to store metadata, deleting obj {0}", fsSong.Fm.ObjectName);
                                               
-                              _storageSystem.DeleteObject(fsSong.Fm.ContainerName,
-                                                          fsSong.Fm.ObjectName);
+                              _storageSystem.DeleteObject(containerName, fsSong.Fm.ObjectName);
                            }
                            else
                            {
@@ -561,7 +557,7 @@ public class Jukebox
                         else
                         {
                            Console.WriteLine("error: unable to upload {0} to {1}",
-                              fsSong.Fm.ObjectName, fsSong.Fm.ContainerName);
+                              fsSong.Fm.ObjectName, containerName);
                         }
                      }
                   }
@@ -695,6 +691,19 @@ public class Jukebox
       }
    }
 
+   public long RetrieveFile(FileMetadata fm, string dirPath)
+   {
+      long bytesRetrieved = 0;
+      if (dirPath.Length > 0)
+      {
+         string localFilePath = Path.Join(dirPath, fm.FileUid);
+         bytesRetrieved = _storageSystem.GetObject(_containerPrefix + fm.ContainerName,
+            fm.ObjectName, localFilePath);
+      }
+
+      return bytesRetrieved;
+   }
+   
    public bool DownloadSong(SongMetadata song)
    {
       if (ExitRequested)
@@ -704,7 +713,7 @@ public class Jukebox
 
       string filePath = SongPathInPlaylist(song);
       double downloadStartTime = Utils.TimeTime();
-      long songBytesRetrieved = _storageSystem.RetrieveFile(song.Fm, _songPlayDir);
+      long songBytesRetrieved = RetrieveFile(song.Fm, _songPlayDir);
       if (ExitRequested)
       {
          return false;
@@ -737,34 +746,6 @@ public class Jukebox
                return false;
             }
          }
-
-         // is it encrypted? if so, unencrypt it
-         //int encrypted = song.Fm.Encrypted;
-
-         //TODO: (3) encryption (DownloadSong)
-         //if (encrypted == 1)
-         //{
-         //     try:
-         //         with open(filePath, 'rb') as contentFile:
-         //             fileContents = contentFile.read()
-         //     except IOError:
-         //         Console.WriteLine("error: unable to read file {0}", filePath);
-         //         return false;
-
-         //     if (encrypted)
-         //     {
-         //        encryption = GetEncryptor();
-         //        fileContents = encryption.decrypt(fileContents);
-         //     }
-
-         // re-write out the unencrypted file contents
-         //     try:
-         //         with open(filePath, 'wb') as contentFile:
-         //             content_file.write(fileContents)
-         //     except IOError:
-         //         Console.WriteLine("error: unable to write unencrypted file '{0}'", filePath);
-         //         return false;
-         //}
 
          if (CheckFileIntegrity(song))
          {
@@ -862,6 +843,7 @@ public class Jukebox
                   {
                      exitCode = _audioPlayerProcess.ExitCode;
                   }
+                  _audioPlayerProcess.Dispose();
                   _audioPlayerProcess = null;
                }
             }
@@ -872,7 +854,11 @@ public class Jukebox
                // audio player not available
                _audioPlayerExeFileName = "";
                _audioPlayerCommandArgs = "";
-               _audioPlayerProcess = null;
+               if (_audioPlayerProcess != null)
+               {
+                  _audioPlayerProcess.Dispose();
+                  _audioPlayerProcess = null;
+               }
                exitCode = -1;
             }
 
@@ -1297,11 +1283,10 @@ public class Jukebox
       }
    }
 
-   private (bool, byte[]?, int) ReadFileContents(string filePath, bool allowEncryption = true)
+   private (bool, byte[]?) ReadFileContents(string filePath)
    {
       bool fileRead = false;
       byte[]? fileContents = null;
-      int padChars = 0;
 
       try
       {
@@ -1313,36 +1298,7 @@ public class Jukebox
          Console.WriteLine("error: unable to read file {0}", filePath);
       }
 
-      if (fileRead && fileContents != null)
-      {
-         if (fileContents.Length > 0)
-         {
-            if (allowEncryption && _jukeboxOptions.UseEncryption)
-            {
-               //TODO: (3) encryption (ReadFileContents)
-               /*
-               if (_debugPrint)
-               {
-                  Console.WriteLine("encrypting file");
-               }
-               // the length of the data to encrypt must be a multiple of 16
-               int numExtraChars = fileContents.Length % 16;
-               if (numExtraChars > 0)
-               {
-                   if (_debugPrint)
-                   {
-                      Console.WriteLine("padding file for encryption");
-                   }
-                   padChars = 16 - numExtraChars;
-                   fileContents += "".ljust(padChars, ' ');
-               }
-               fileContents = encryption.encrypt(fileContents);
-               */
-            }
-         }
-      }
-
-      return (fileRead, fileContents, padChars);
+      return (fileRead, fileContents);
    }
 
    public bool UploadMetadataDb()
@@ -1431,7 +1387,7 @@ public class Jukebox
             byte[]? fileContents;
             string objectName = listingEntry;
             
-            (fileRead, fileContents, _) = ReadFileContents(listingEntry);
+            (fileRead, fileContents) = ReadFileContents(listingEntry);
             
             if (fileRead && fileContents != null)
             {
@@ -1571,7 +1527,7 @@ public class Jukebox
             {
                Console.WriteLine("{0} {1}", song.Fm.ContainerName, song.Fm.ObjectName);
                // delete each song audio file
-               if (_storageSystem.DeleteObject(song.Fm.ContainerName, song.Fm.ObjectName))
+               if (_storageSystem.DeleteObject(_containerPrefix+song.Fm.ContainerName, song.Fm.ObjectName))
                {
                   numSongsDeleted++;
                   // delete song metadata
@@ -1681,7 +1637,7 @@ public class Jukebox
             bool fileRead;
             byte[]? fileContents;
 
-            (fileRead, fileContents, _) = ReadFileContents(listingEntry);
+            (fileRead, fileContents) = ReadFileContents(listingEntry);
             
             if (fileRead && fileContents != null)
             {

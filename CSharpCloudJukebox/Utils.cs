@@ -1,5 +1,7 @@
 // ReSharper disable StringLastIndexOfIsCultureSpecific.1
 
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 namespace CSharpCloudJukebox;
@@ -60,7 +62,30 @@ public class Utils
    {
       // python: os.path.isfile
       return File.Exists(path);
-   } 
+   }
+
+   public static bool FileExists(string path)
+   {
+      return File.Exists(path);
+   }
+
+   public static bool DeleteFile(string path)
+   {
+      bool deleted = false;
+      if (FileExists(path))
+      {
+         try
+         {
+            File.Delete(path);
+            deleted = true;
+         }
+         catch (Exception)
+         {
+         }
+      }
+
+      return deleted;
+   }
 
    public static (string root, string ext) PathSplitExt(string path)
    {
@@ -199,5 +224,18 @@ public class Utils
       }
 
       return osIdentifier;
+   }
+   
+   public static string GetLocalIpAddress()
+   {
+      var host = Dns.GetHostEntry(Dns.GetHostName());
+      foreach (var ip in host.AddressList)
+      {
+         if (ip.AddressFamily == AddressFamily.InterNetwork)
+         {
+            return ip.ToString();
+         }
+      }
+      throw new Exception("No network adapters with an IPv4 address in the system!");
    }
 }
