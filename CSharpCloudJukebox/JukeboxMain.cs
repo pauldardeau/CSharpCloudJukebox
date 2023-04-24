@@ -2,64 +2,124 @@ namespace CSharpCloudJukebox;
 
 public class JukeboxMain
 {
+   private const string argPrefix = "--";
+   private const string argDebug = "debug";
+   private const string argFileCacheCount = "file-cache-count";
+   private const string argIntegrityChecks = "integrity-checks";
+   private const string argStorage = "storage";
+   private const string argArtist = "artist";
+   private const string argPlaylist = "playlist";
+   private const string argSong = "song";
+   private const string argAlbum = "album";
+   private const string argCommand = "command";
+   private const string argFormat = "format";
+
+   private const string cmdDeleteAlbum = "delete-album";
+   private const string cmdDeleteArtist = "delete-artist";
+   private const string cmdDeletePlaylist = "delete-playlist";
+   private const string cmdDeleteSong = "delete-song";
+   private const string cmdExportAlbum = "export-album";
+   private const string cmdExportPlaylist = "export-playlist";
+   private const string cmdHelp = "help";
+   private const string cmdImportAlbum = "import-album";
+   private const string cmdImportAlbumArt = "import-album-art";
+   private const string cmdImportPlaylists = "import-playlists";
+   private const string cmdImportSongs = "import-songs";
+   private const string cmdInitStorage = "init-storage";
+	private const string cmdListAlbums = "list-albums";
+	private const string cmdListArtists = "list-artists";
+	private const string cmdListContainers = "list-containers";
+	private const string cmdListGenres = "list-genres";
+	private const string cmdListPlaylists = "list-playlists";
+	private const string cmdListSongs = "list-songs";
+	private const string cmdPlay = "play";
+	private const string cmdPlayAlbum = "play-album";
+	private const string cmdPlayPlaylist = "play-playlist";
+	private const string cmdRetrieveCatalog = "retrieve-catalog";
+	private const string cmdShowAlbum = "show-album";
+	private const string cmdShowPlaylist = "show-playlist";
+	private const string cmdShufflePlay = "shuffle-play";
+	private const string cmdUploadMetadataDb = "upload-metadata-db";
+	private const string cmdUsage = "usage";
+
+	private const string ssFs = "fs";
+	private const string ssS3 = "s3";
+
+	private const string credsFileSuffix = "_creds.txt";
+	private const string credsContainerPrefix = "container_prefix";
+
+	private const string awsAccessKey = "aws_access_key";
+	private const string awsSecretKey = "aws_secret_key";
+	private const string updateAwsAccessKey = "update_aws_access_key";
+	private const string updateAwsSecretKey = "update_aws_secret_key";
+	private const string endpointUrl = "endpoint_url";
+	private const string region = "region";
+
+	private const string fsRootDir = "root_dir";
+
+	private const string audioFileTypeMp3 = "mp3";
+	private const string audioFileTypeM4a = "m4a";
+	private const string audioFileTypeFlac = "flac";
+
+
    private StorageSystem? ConnectS3System(Dictionary<string, string> credentials,
-      bool inDebugMode,
-      bool inUpdateMode)
+                                          bool inDebugMode,
+                                          bool inUpdateMode)
    {
-      string awsAccessKey = "";
-      string awsSecretKey = "";
-      string updateAwsAccessKey = "";
-      string updateAwsSecretKey = "";
-      string endpointUrl = "";
-      string region = "";
+      string theAwsAccessKey = "";
+      string theAwsSecretKey = "";
+      string theUpdateAwsAccessKey = "";
+      string theUpdateAwsSecretKey = "";
+      string theEndpointUrl = "";
+      string theRegion = "";
 
-      if (credentials.ContainsKey("aws_access_key"))
+      if (credentials.ContainsKey(awsAccessKey))
       {
-         awsAccessKey = credentials["aws_access_key"];
+         theAwsAccessKey = credentials[awsAccessKey];
       }
 
-      if (credentials.ContainsKey("aws_secret_key"))
+      if (credentials.ContainsKey(awsSecretKey))
       {
-         awsSecretKey = credentials["aws_secret_key"];
+         theAwsSecretKey = credentials[awsSecretKey];
       }
 
-      if (credentials.ContainsKey("update_aws_access_key") &&
-          credentials.ContainsKey("update_aws_secret_key"))
+      if (credentials.ContainsKey(updateAwsAccessKey) &&
+          credentials.ContainsKey(updateAwsSecretKey))
       {
-         updateAwsAccessKey = credentials["update_aws_access_key"];
-         updateAwsSecretKey = credentials["update_aws_secret_key"];
+         theUpdateAwsAccessKey = credentials[updateAwsAccessKey];
+         theUpdateAwsSecretKey = credentials[updateAwsSecretKey];
       }
 
-      if (credentials.ContainsKey("endpoint_url"))
+      if (credentials.ContainsKey(endpointUrl))
       {
-         endpointUrl = credentials["endpoint_url"];
+         theEndpointUrl = credentials[endpointUrl];
       }
       else
       {
-         Console.WriteLine("error: s3 requires endpoint_url to be configured in creds file");
+         Console.WriteLine("error: s3 requires {0} to be configured in creds file", endpointUrl);
          return null;
       }
 
-      if (credentials.ContainsKey("region"))
+      if (credentials.ContainsKey(region))
       {
-         region = credentials["region"];
+         theRegion = credentials[region];
       }
 
       if (inDebugMode)
       {
-         Console.WriteLine("aws_access_key={0}", awsAccessKey);
-         Console.WriteLine("aws_secret_key={0}", awsSecretKey);
-         if (updateAwsAccessKey.Length > 0 && updateAwsSecretKey.Length > 0)
+         Console.WriteLine("{0}={1}", awsAccessKey, theAwsAccessKey);
+         Console.WriteLine("{0}={1}", awsSecretKey, theAwsSecretKey);
+         if (theUpdateAwsAccessKey.Length > 0 && theUpdateAwsSecretKey.Length > 0)
          {
-            Console.WriteLine("update_aws_access_key={0}", updateAwsAccessKey);
-            Console.WriteLine("update_aws_secret_key={0}", updateAwsSecretKey);
+            Console.WriteLine("{0}={1}", updateAwsAccessKey, theUpdateAwsAccessKey);
+            Console.WriteLine("{0}={1}", updateAwsSecretKey, theUpdateAwsSecretKey);
          }
       }
 
-      if (awsAccessKey.Length == 0 || awsSecretKey.Length == 0)
+      if (theAwsAccessKey.Length == 0 || theAwsSecretKey.Length == 0)
       {
-         Console.WriteLine("error: no s3 credentials given. please specify aws_access_key " +
-                           "and aws_secret_key in credentials file");
+         Console.WriteLine("error: no s3 credentials given. please specify {0} and {1} in credentials file",
+                           awsAccessKey, awsSecretKey);
          return null;
       }
       else
@@ -69,13 +129,13 @@ public class JukeboxMain
 
          if (inUpdateMode)
          {
-            accessKey = updateAwsAccessKey;
-            secretKey = updateAwsSecretKey;
+            accessKey = theUpdateAwsAccessKey;
+            secretKey = theUpdateAwsSecretKey;
          }
          else
          {
-            accessKey = awsAccessKey;
-            secretKey = awsSecretKey;
+            accessKey = theAwsAccessKey;
+            secretKey = theAwsSecretKey;
          }
 
          if (inDebugMode)
@@ -84,20 +144,20 @@ public class JukeboxMain
          }
 
          return new S3StorageSystem(accessKey,
-            secretKey,
-            endpointUrl,
-            region,
-            inDebugMode);
+                                    secretKey,
+                                    theEndpointUrl,
+                                    theRegion,
+                                    inDebugMode);
       }
    }
 
    private StorageSystem? ConnectStorageSystem(string systemName,
-      Dictionary<string, string> credentials,
-      string containerPrefix,
-      bool inDebugMode,
-      bool inUpdateMode)
+                                               Dictionary<string, string> credentials,
+                                               string containerPrefix,
+                                               bool inDebugMode,
+                                               bool inUpdateMode)
    {
-      if (systemName == "s3")
+      if (systemName == ssS3)
       {
          if (containerPrefix.Length > 0)
          {
@@ -105,22 +165,22 @@ public class JukeboxMain
          }
          else
          {
-            Console.WriteLine("error: a container prefix MUST be specified for s3");
+            Console.WriteLine("error: a container prefix must be specified for s3");
             return null;
          }
       }
-      else if (systemName == "fs")
+      else if (systemName == ssFs)
       {
-         if (credentials.ContainsKey("root_dir"))
+         if (credentials.ContainsKey(fsRootDir))
          {
-            string rootDir = credentials["root_dir"];
+            string rootDir = credentials[fsRootDir];
             if (rootDir.Length > 0)
             {
                return new FsStorageSystem(rootDir, inDebugMode);
             }
          }
 
-         Console.WriteLine("error: root_dir must be specified for file-system storage system");
+         Console.WriteLine("error: {0} must be specified for file-system storage system", fsRootDir);
          return null;
       }
       else
@@ -133,30 +193,30 @@ public class JukeboxMain
    private void ShowUsage()
    {
       Console.WriteLine("Supported Commands:");
-      Console.WriteLine("\tdelete-artist      - delete specified artist");
-      Console.WriteLine("\tdelete-album       - delete specified album");
-      Console.WriteLine("\tdelete-playlist    - delete specified playlist");
-      Console.WriteLine("\tdelete-song        - delete specified song");
-      Console.WriteLine("\thelp               - show this help message");
-      Console.WriteLine("\timport-songs       - import all new songs from song-import subdirectory");
-      Console.WriteLine("\timport-playlists   - import all new playlists from playlist-import subdirectory");
-      Console.WriteLine("\timport-album-art   - import all album art from album-art-import subdirectory");
-      Console.WriteLine("\tlist-songs         - show listing of all available songs");
-      Console.WriteLine("\tlist-artists       - show listing of all available artists");
-      Console.WriteLine("\tlist-containers    - show listing of all available storage containers");
-      Console.WriteLine("\tlist-albums        - show listing of all available albums");
-      Console.WriteLine("\tlist-genres        - show listing of all available genres");
-      Console.WriteLine("\tlist-playlists     - show listing of all available playlists");
-      Console.WriteLine("\tshow-album         - show songs in a specified album");
-      Console.WriteLine("\tshow-playlist      - show songs in specified playlist");
-      Console.WriteLine("\tplay               - start playing songs");
-      Console.WriteLine("\tshuffle-play       - play songs randomly");
-      Console.WriteLine("\tplay-playlist      - play specified playlist");
-      Console.WriteLine("\tplay-album         - play specified album");
-      Console.WriteLine("\tretrieve-catalog   - retrieve copy of music catalog");
-      Console.WriteLine("\tupload-metadata-db - upload SQLite metadata");
-      Console.WriteLine("\tinit-storage       - initialize storage system");
-      Console.WriteLine("\tusage              - show this help message");
+      Console.WriteLine("\t{0}      - delete specified artist", cmdDeleteArtist);
+      Console.WriteLine("\t{0}       - delete specified album", cmdDeleteAlbum);
+      Console.WriteLine("\t{0}    - delete specified playlist", cmdDeletePlaylist);
+      Console.WriteLine("\t{0}        - delete specified song", cmdDeleteSong);
+      Console.WriteLine("\t{0}               - show this help message", cmdHelp);
+      Console.WriteLine("\t{0}       - import all new songs from song-import subdirectory", cmdImportSongs);
+      Console.WriteLine("\t{0}   - import all new playlists from playlist-import subdirectory", cmdImportPlaylists);
+      Console.WriteLine("\t{0}   - import all album art from album-art-import subdirectory", cmdImportAlbumArt);
+      Console.WriteLine("\t{0}         - show listing of all available songs", cmdListSongs);
+      Console.WriteLine("\t{0}       - show listing of all available artists", cmdListArtists);
+      Console.WriteLine("\t{0}    - show listing of all available storage containers", cmdListContainers);
+      Console.WriteLine("\t{0}        - show listing of all available albums", cmdListAlbums);
+      Console.WriteLine("\t{0}        - show listing of all available genres", cmdListGenres);
+      Console.WriteLine("\t{0}     - show listing of all available playlists", cmdListPlaylists);
+      Console.WriteLine("\t{0}         - show songs in a specified album", cmdShowAlbum);
+      Console.WriteLine("\t{0}      - show songs in specified playlist", cmdShowPlaylist);
+      Console.WriteLine("\t{0}               - start playing songs", cmdPlay);
+      Console.WriteLine("\t{0}       - play songs randomly", cmdShufflePlay);
+      Console.WriteLine("\t{0}      - play specified playlist", cmdPlayPlaylist);
+      Console.WriteLine("\t{0}         - play specified album", cmdPlayAlbum);
+      Console.WriteLine("\t{0}   - retrieve copy of music catalog", cmdRetrieveCatalog);
+      Console.WriteLine("\t{0} - upload SQLite metadata", cmdUploadMetadataDb);
+      Console.WriteLine("\t{0}       - initialize storage system", cmdInitStorage);
+      Console.WriteLine("\t{0}              - show this help message", cmdUsage);
       Console.WriteLine("");
    }
 
@@ -181,39 +241,36 @@ public class JukeboxMain
    {
       int exitCode = 0;
       bool debugMode = false;
-      string storageType = "swift";
+      string storageType = ssS3;
       string artist = "";
       string playlist = "";
       string song = "";
       string album = "";
 
       ArgumentParser optParser = new ArgumentParser();
-      optParser.AddOptionalBoolFlag("--debug", "run in debug mode");
-      optParser.AddOptionalIntArgument("--file-cache-count", "number of songs to buffer in cache");
-      optParser.AddOptionalBoolFlag("--integrity-checks", "check file integrity after download");
-      optParser.AddOptionalBoolFlag("--encrypt", "encrypt file contents");
-      optParser.AddOptionalStringArgument("--key", "encryption key");
-      optParser.AddOptionalStringArgument("--keyfile", "path to file containing encryption key");
-      optParser.AddOptionalStringArgument("--storage", "storage system type (s3, fs)");
-      optParser.AddOptionalStringArgument("--artist", "limit operations to specified artist");
-      optParser.AddOptionalStringArgument("--playlist", "limit operations to specified playlist");
-      optParser.AddOptionalStringArgument("--song", "limit operations to specified song");
-      optParser.AddOptionalStringArgument("--album", "limit operations to specified album");
-      optParser.AddRequiredArgument("command", "command for jukebox");
+      optParser.AddOptionalBoolFlag(argPrefix+argDebug, "run in debug mode");
+      optParser.AddOptionalIntArgument(argPrefix+argFileCacheCount, "number of songs to buffer in cache");
+      optParser.AddOptionalBoolFlag(argPrefix+argIntegrityChecks, "check file integrity after download");
+      optParser.AddOptionalStringArgument(argPrefix+argStorage, "storage system type (s3, fs)");
+      optParser.AddOptionalStringArgument(argPrefix+argArtist, "limit operations to specified artist");
+      optParser.AddOptionalStringArgument(argPrefix+argPlaylist, "limit operations to specified playlist");
+      optParser.AddOptionalStringArgument(argPrefix+argSong, "limit operations to specified song");
+      optParser.AddOptionalStringArgument(argPrefix+argAlbum, "limit operations to specified album");
+      optParser.AddRequiredArgument(argCommand, "command for jukebox");
 
       Dictionary<string, object> args = optParser.ParseArgs(consoleArgs);
 
       JukeboxOptions options = new JukeboxOptions();
 
-      if (args.ContainsKey("debug"))
+      if (args.ContainsKey(argDebug))
       {
          debugMode = true;
          options.DebugMode = true;
       }
 
-      if (args.ContainsKey("file_cache_count"))
+      if (args.ContainsKey(argFileCacheCount))
       {
-         int fileCacheCount = (int)args["file_cache_count"];
+         int fileCacheCount = (int)args[argFileCacheCount];
          if (debugMode)
          {
             Console.WriteLine("setting file cache count={0}", fileCacheCount);
@@ -222,7 +279,7 @@ public class JukeboxMain
          options.FileCacheCount = fileCacheCount;
       }
 
-      if (args.ContainsKey("integrity_checks"))
+      if (args.ContainsKey(argIntegrityChecks))
       {
          if (debugMode)
          {
@@ -232,14 +289,14 @@ public class JukeboxMain
          options.CheckDataIntegrity = true;
       }
 
-      if (args.ContainsKey("storage"))
+      if (args.ContainsKey(argStorage))
       {
-         string storage = (string)args["storage"];
-         List<string> supportedSystems = new List<string> { "s3", "fs" };
+         string storage = (string)args[argStorage];
+         List<string> supportedSystems = new List<string> { ssS3, ssFs };
          if (!supportedSystems.Contains(storage))
          {
             Console.WriteLine("error: invalid storage type {0}", storage);
-            //Console.WriteLine("supported systems are: %s" % str(supported_systems));
+            //Console.WriteLine("supported systems are: %s" % str(supportedSystems));
             Utils.SysExit(1);
          }
          else
@@ -253,27 +310,27 @@ public class JukeboxMain
          }
       }
 
-      if (args.ContainsKey("artist"))
+      if (args.ContainsKey(argArtist))
       {
-         artist = (string)args["artist"];
+         artist = (string)args[argArtist];
       }
 
-      if (args.ContainsKey("playlist"))
+      if (args.ContainsKey(argPlaylist))
       {
-         playlist = (string)args["playlist"];
+         playlist = (string)args[argPlaylist];
       }
 
-      if (args.ContainsKey("song"))
+      if (args.ContainsKey(argSong))
       {
-         song = (string)args["song"];
+         song = (string)args[argSong];
       }
 
-      if (args.ContainsKey("album"))
+      if (args.ContainsKey(argAlbum))
       {
-         album = (string)args["album"];
+         album = (string)args[argAlbum];
       }
 
-      if (args.ContainsKey("command"))
+      if (args.ContainsKey(argCommand))
       {
          if (debugMode)
          {
@@ -281,7 +338,7 @@ public class JukeboxMain
          }
 
          string containerPrefix = "";
-         string credsFile = storageType + "_creds.txt";
+         string credsFile = storageType + credsFileSuffix;
          Dictionary<string, string> creds = new Dictionary<string, string>();
          string credsFilePath = Path.Join(Directory.GetCurrentDirectory(), credsFile);
 
@@ -307,7 +364,7 @@ public class JukeboxMain
                         if (key.Length > 0 && value.Length > 0)
                         {
                            creds[key] = value;
-                           if (key == "container_prefix")
+                           if (key == credsContainerPrefix)
                            {
                               containerPrefix = value;
                            }
@@ -329,24 +386,24 @@ public class JukeboxMain
             Console.WriteLine("no creds file ({0})", credsFilePath);
          }
 
-         string command = (string)args["command"];
+         string command = (string)args[argCommand];
 
-         List<string> helpCmds = new List<string> { "help", "usage" };
+         List<string> helpCmds = new List<string> { cmdHelp, cmdUsage };
          List<string> nonHelpCmds = new List<string>
          {
-            "import-songs", "play", "shuffle-play", "list-songs",
-            "list-artists", "list-containers", "list-genres",
-            "list-albums", "retrieve-catalog", "import-playlists",
-            "list-playlists", "show-playlist", "play-playlist",
-            "delete-song", "delete-album", "delete-playlist",
-            "delete-artist", "upload-metadata-db",
-            "import-album-art", "play-album", "show-album"
+            cmdImportSongs, cmdPlay, cmdShufflePlay, cmdListSongs,
+            cmdListArtists, cmdListContainers, cmdListGenres,
+            cmdListAlbums, cmdRetrieveCatalog, cmdImportPlaylists,
+            cmdListPlaylists, cmdShowPlaylist, cmdPlayPlaylist,
+            cmdDeleteSong, cmdDeleteAlbum, cmdDeletePlaylist,
+            cmdDeleteArtist, cmdUploadMetadataDb,
+            cmdImportAlbumArt, cmdPlayAlbum, cmdShowAlbum
          };
          List<string> updateCmds = new List<string>
          {
-            "import-songs", "import-playlists", "delete-song",
-            "delete-album", "delete-playlist", "delete-artist",
-            "upload-metadata-db", "import-album-art", "init-storage"
+            cmdImportSongs, cmdImportPlaylists, cmdDeleteSong,
+            cmdDeleteAlbum, cmdDeletePlaylist, cmdDeleteArtist,
+            cmdUploadMetadataDb, cmdImportAlbumArt, cmdInitStorage
          };
          List<string> allCmds = new List<string>();
          allCmds.AddRange(helpCmds);
@@ -376,7 +433,7 @@ public class JukeboxMain
 
                try
                {
-                  options.SuppressMetadataDownload = (command == "upload-metadata-db");
+                  options.SuppressMetadataDownload = (command == cmdUploadMetadataDb);
 
                   bool inUpdateMode = updateCmds.Contains(command);
 
@@ -398,7 +455,7 @@ public class JukeboxMain
 
                         try
                         {
-                           if (command == "init-storage")
+                           if (command == cmdInitStorage)
                            {
                               if (InitStorageSystem(storageSystem, containerPrefix))
                               {
@@ -415,49 +472,49 @@ public class JukeboxMain
                            {
                               try
                               {
-                                 if (command == "import-songs")
+                                 if (command == cmdImportSongs)
                                  {
                                     jukebox.ImportSongs();
                                  }
-                                 else if (command == "import-playlists")
+                                 else if (command == cmdImportPlaylists)
                                  {
                                     jukebox.ImportPlaylists();
                                  }
-                                 else if (command == "play")
+                                 else if (command == cmdPlay)
                                  {
                                     bool shuffle = false;
                                     jukebox.PlaySongs(shuffle, artist, album);
                                  }
-                                 else if (command == "shuffle-play")
+                                 else if (command == cmdShufflePlay)
                                  {
                                     bool shuffle = true;
                                     jukebox.PlaySongs(shuffle, artist, album);
                                  }
-                                 else if (command == "list-songs")
+                                 else if (command == cmdListSongs)
                                  {
                                     jukebox.ShowListings();
                                  }
-                                 else if (command == "list-artists")
+                                 else if (command == cmdListArtists)
                                  {
                                     jukebox.ShowArtists();
                                  }
-                                 else if (command == "list-containers")
+                                 else if (command == cmdListContainers)
                                  {
                                     jukebox.ShowListContainers();
                                  }
-                                 else if (command == "list-genres")
+                                 else if (command == cmdListGenres)
                                  {
                                     jukebox.ShowGenres();
                                  }
-                                 else if (command == "list-albums")
+                                 else if (command == cmdListAlbums)
                                  {
                                     jukebox.ShowAlbums();
                                  }
-                                 else if (command == "list-playlists")
+                                 else if (command == cmdListPlaylists)
                                  {
                                     jukebox.ShowPlaylists();
                                  }
-                                 else if (command == "show-playlist")
+                                 else if (command == cmdShowPlaylist)
                                  {
                                     if (playlist.Length > 0)
                                     {
@@ -465,11 +522,11 @@ public class JukeboxMain
                                     }
                                     else
                                     {
-                                       Console.WriteLine("error: playlist must be specified using --playlist option");
+                                       Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "play-playlist")
+                                 else if (command == cmdPlayPlaylist)
                                  {
                                     if (playlist.Length > 0)
                                     {
@@ -477,15 +534,15 @@ public class JukeboxMain
                                     }
                                     else
                                     {
-                                       Console.WriteLine("error: playlist must be specified using --playlist option");
+                                       Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "retrieve-catalog")
+                                 else if (command == cmdRetrieveCatalog)
                                  {
                                     Console.WriteLine("retrieve-catalog not yet implemented");
                                  }
-                                 else if (command == "delete-song")
+                                 else if (command == cmdDeleteSong)
                                  {
                                     if (song.Length > 0)
                                     {
@@ -501,11 +558,11 @@ public class JukeboxMain
                                     }
                                     else
                                     {
-                                       Console.WriteLine("error: song must be specified using --song option");
+                                       Console.WriteLine("error: song must be specified using {0}{1} option", argPrefix, argSong);
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "delete-artist")
+                                 else if (command == cmdDeleteArtist)
                                  {
                                     if (artist.Length > 0)
                                     {
@@ -521,11 +578,11 @@ public class JukeboxMain
                                     }
                                     else
                                     {
-                                       Console.WriteLine("error: artist must be specified using --artist option");
+                                       Console.WriteLine("error: artist must be specified using {0}{1} option", argPrefix, argArtist);
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "delete-album")
+                                 else if (command == cmdDeleteAlbum)
                                  {
                                     if (album.Length > 0)
                                     {
@@ -541,11 +598,11 @@ public class JukeboxMain
                                     }
                                     else
                                     {
-                                       Console.WriteLine("error: album must be specified using --album option");
+                                       Console.WriteLine("error: album must be specified using {0}{1} option", argPrefix, argAlbum);
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "delete-playlist")
+                                 else if (command == cmdDeletePlaylist)
                                  {
                                     if (playlist.Length > 0)
                                     {
@@ -561,11 +618,11 @@ public class JukeboxMain
                                     }
                                     else
                                     {
-                                       Console.WriteLine("error: playlist must be specified using --playlist option");
+                                       Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "upload-metadata-db")
+                                 else if (command == cmdUploadMetadataDb)
                                  {
                                     if (jukebox.UploadMetadataDb())
                                     {
@@ -577,7 +634,7 @@ public class JukeboxMain
                                        exitCode = 1;
                                     }
                                  }
-                                 else if (command == "import-album-art")
+                                 else if (command == cmdImportAlbumArt)
                                  {
                                     jukebox.ImportAlbumArt();
                                  }

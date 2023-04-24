@@ -13,8 +13,11 @@ public class JukeboxDb
    {
       _debugPrint = debugPrint;
       _dbIsOpen = false;
-      _metadataDbFilePath = metadataDbFilePath.Length > 0 ? metadataDbFilePath : "jukebox_db.sqlite3";
-      _dbConnection = new SqliteConnection("Data Source=" + _metadataDbFilePath);
+      _metadataDbFilePath = metadataDbFilePath.Length > 0 ?
+                               metadataDbFilePath :
+                               Jukebox.defaultDbFileName;
+      _dbConnection = new SqliteConnection("Data Source=" +
+                                           _metadataDbFilePath);
    }
 
    public bool IsOpen()
@@ -188,7 +191,9 @@ public class JukeboxDb
       string plObject = "";
       if (playlistName != null && playlistName.Length > 0)
       {
-         string sql = "SELECT playlist_uid FROM playlist WHERE playlist_name = $playlist_name";
+         string sql = "SELECT playlist_uid " +
+                      "FROM playlist " +
+                      "WHERE playlist_name = $playlist_name";
          using (var command = _dbConnection.CreateCommand())
          {
             command.CommandText = sql;
@@ -223,7 +228,9 @@ public class JukeboxDb
                string artistName = reader.GetString(5);
                string songName = reader.GetString(7);
                
-               FileMetadata fm = new FileMetadata(fileUid, containerName, objectName);
+               FileMetadata fm = new FileMetadata(fileUid,
+                                                  containerName,
+                                                  objectName);
                SongMetadata song = new SongMetadata(fm, artistName, songName);
                song.Fm.FileTime = reader.GetString(1);
                song.Fm.OriginFileSize = reader.GetInt32(2);
@@ -365,26 +372,26 @@ public class JukeboxDb
                                 $container_name,
                                 $object_name,
                                 $album_uid)";
-         using (var command = _dbConnection.CreateCommand())
+         using (var cmd = _dbConnection.CreateCommand())
          {
             try
             {
-               command.CommandText = sql;
-               command.Parameters.AddWithValue("$file_uid", song.Fm.FileUid);
-               command.Parameters.AddWithValue("$file_time", song.Fm.FileTime);
-               command.Parameters.AddWithValue("$o_file_size", song.Fm.OriginFileSize);
-               command.Parameters.AddWithValue("$s_file_size", song.Fm.StoredFileSize);
-               command.Parameters.AddWithValue("$pad_char_count", song.Fm.PadCharCount);
-               command.Parameters.AddWithValue("$artist_name", song.ArtistName);
-               command.Parameters.AddWithValue("", "");
-               command.Parameters.AddWithValue("$song_name", song.SongName);
-               command.Parameters.AddWithValue("$md5", song.Fm.Md5Hash);
-               command.Parameters.AddWithValue("$compressed", song.Fm.Compressed);
-               command.Parameters.AddWithValue("$encrypted", song.Fm.Encrypted);
-               command.Parameters.AddWithValue("$container_name", song.Fm.ContainerName);
-               command.Parameters.AddWithValue("$object_name", song.Fm.ObjectName);
-               command.Parameters.AddWithValue("$album_uid", song.AlbumUid);
-               command.ExecuteNonQuery();
+               cmd.CommandText = sql;
+               cmd.Parameters.AddWithValue("$file_uid", song.Fm.FileUid);
+               cmd.Parameters.AddWithValue("$file_time", song.Fm.FileTime);
+               cmd.Parameters.AddWithValue("$o_file_size", song.Fm.OriginFileSize);
+               cmd.Parameters.AddWithValue("$s_file_size", song.Fm.StoredFileSize);
+               cmd.Parameters.AddWithValue("$pad_char_count", song.Fm.PadCharCount);
+               cmd.Parameters.AddWithValue("$artist_name", song.ArtistName);
+               cmd.Parameters.AddWithValue("", "");
+               cmd.Parameters.AddWithValue("$song_name", song.SongName);
+               cmd.Parameters.AddWithValue("$md5", song.Fm.Md5Hash);
+               cmd.Parameters.AddWithValue("$compressed", song.Fm.Compressed);
+               cmd.Parameters.AddWithValue("$encrypted", song.Fm.Encrypted);
+               cmd.Parameters.AddWithValue("$container_name", song.Fm.ContainerName);
+               cmd.Parameters.AddWithValue("$object_name", song.Fm.ObjectName);
+               cmd.Parameters.AddWithValue("$album_uid", song.AlbumUid);
+               cmd.ExecuteNonQuery();
                insertSuccess = true;
             }
             catch (SqliteException e)
@@ -418,27 +425,27 @@ public class JukeboxDb
                             object_name = $object_name,
                             album_uid = $album_uid 
                         WHERE song_uid = $file_uid";
-         using (var command = _dbConnection.CreateCommand())
+         using (var cmd = _dbConnection.CreateCommand())
          {
             try
             {
-               command.CommandText = sql;
-               command.Parameters.AddWithValue("$file_time", song.Fm.FileTime);
-               command.Parameters.AddWithValue("$o_file_size", song.Fm.OriginFileSize);
-               command.Parameters.AddWithValue("$s_file_size", song.Fm.StoredFileSize);
-               command.Parameters.AddWithValue("$pad_char_count", song.Fm.PadCharCount);
-               command.Parameters.AddWithValue("$artist_name", song.ArtistName);
-               command.Parameters.AddWithValue("$artist_uid", "");
-               command.Parameters.AddWithValue("$song_name", song.SongName);
-               command.Parameters.AddWithValue("$md5_hash", song.Fm.Md5Hash);
-               command.Parameters.AddWithValue("$compressed", song.Fm.Compressed);
-               command.Parameters.AddWithValue("$encrypted", song.Fm.Encrypted);
-               command.Parameters.AddWithValue("$container_name", song.Fm.ContainerName);
-               command.Parameters.AddWithValue("$object_name", song.Fm.ObjectName);
-               command.Parameters.AddWithValue("$album_uid", song.AlbumUid);
-               command.Parameters.AddWithValue("$file_uid", song.Fm.FileUid);
+               cmd.CommandText = sql;
+               cmd.Parameters.AddWithValue("$file_time", song.Fm.FileTime);
+               cmd.Parameters.AddWithValue("$o_file_size", song.Fm.OriginFileSize);
+               cmd.Parameters.AddWithValue("$s_file_size", song.Fm.StoredFileSize);
+               cmd.Parameters.AddWithValue("$pad_char_count", song.Fm.PadCharCount);
+               cmd.Parameters.AddWithValue("$artist_name", song.ArtistName);
+               cmd.Parameters.AddWithValue("$artist_uid", "");
+               cmd.Parameters.AddWithValue("$song_name", song.SongName);
+               cmd.Parameters.AddWithValue("$md5_hash", song.Fm.Md5Hash);
+               cmd.Parameters.AddWithValue("$compressed", song.Fm.Compressed);
+               cmd.Parameters.AddWithValue("$encrypted", song.Fm.Encrypted);
+               cmd.Parameters.AddWithValue("$container_name", song.Fm.ContainerName);
+               cmd.Parameters.AddWithValue("$object_name", song.Fm.ObjectName);
+               cmd.Parameters.AddWithValue("$album_uid", song.AlbumUid);
+               cmd.Parameters.AddWithValue("$file_uid", song.Fm.FileUid);
 
-               command.ExecuteNonQuery();
+               cmd.ExecuteNonQuery();
                updateSuccess = true;
             }
             catch (SqliteException e)
@@ -508,11 +515,13 @@ public class JukeboxDb
             if (album.Length > 0)
             {
                string encodedAlbum = JbUtils.EncodeValue(album);
-               sql += string.Format(" AND object_name LIKE '{0}--{1}%'", encodedArtist, encodedAlbum);
+               sql += string.Format(" AND object_name LIKE '{0}--{1}%'",
+                                    encodedArtist, encodedAlbum);
             }
             else
             {
-               sql += string.Format(" AND object_name LIKE '{0}--%'", encodedArtist);
+               sql += string.Format(" AND object_name LIKE '{0}--%'",
+                                    encodedArtist);
             }
          }
          using (var command = _dbConnection.CreateCommand())

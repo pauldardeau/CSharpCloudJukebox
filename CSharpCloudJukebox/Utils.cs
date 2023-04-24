@@ -8,11 +8,11 @@ namespace CSharpCloudJukebox;
 
 public class Utils
 {
-   public static string DatetimeDatetimeFromtimestamp(double ts)
+   public static string DatetimeFromtimestamp(double ts)
    {
       // python datetime.datetime.fromtimestamp
 
-      //TODO: (1) implement (DatetimeDatetimeFromtimestamp)
+      //TODO: (1) implement (DatetimeFromtimestamp)
       return "";
    }
 
