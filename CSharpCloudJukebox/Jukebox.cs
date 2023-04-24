@@ -9,21 +9,27 @@ public class Jukebox
 
    private static Jukebox? _gJukeboxInstance;
 
-   private const string downloadExtension = ".download";
+
+   // containers
    private const string albumContainer = "albums";
 	private const string albumArtContainer = "album-art";
 	private const string metadataContainer = "music-metadata";
 	private const string playlistContainer = "playlists";
 	private const string songContainerSuffix = "-artist-songs";
+
+   // directories
 	private const string albumArtImportDir = "album-art-import";
 	private const string playlistImportDir = "playlist-import";
 	private const string songImportDir = "song-import";
 	private const string songPlayDir = "song-play";
-	private const string jukeboxPidFileName = "jukebox.pid";
+
+   // files
+   private const string downloadExtension = ".download";
+   private const string jukeboxPidFileName = "jukebox.pid";
    private const string JsonFileExt = ".json";
    private const string IniFileName = "audio_player.ini";
 
-   // audio file INI
+   // audio file INI contents
    private const string keyAudioPlayerExeFileName = "audio_player_exe_file_name";
    private const string keyAudioPlayerCommandArgs = "audio_player_command_args";
    private const string keyAudioPlayerResumeArgs = "audio_player_resume_args";
@@ -350,74 +356,6 @@ public class Jukebox
       return Path.Join(_currentDir, _metadataDbFile);
    }
    
-   private string[] ComponentsFromFileName(string fileName)
-   {
-      if (fileName.Length == 0)
-      {
-         return new string[] {}; 
-      }
-      int posExtension = fileName.IndexOf('.');
-      string baseFileName;
-      if (posExtension > -1)
-      {
-         baseFileName = fileName.Substring(0, posExtension);
-      }
-      else
-      {
-         baseFileName = fileName;
-      }
-      string[] components = baseFileName.Split("--");
-      if (components.Length == 3)
-      {
-         return new[] {JbUtils.DecodeValue(components[0]),
-                       JbUtils.DecodeValue(components[1]),
-                       JbUtils.DecodeValue(components[2])};
-      }
-      else
-      {
-         return new[] {"", "", ""};
-      }
-   }
-
-   private string ArtistFromFileName(string fileName)
-   {
-      if (fileName.Length > 0)
-      {
-         string[] components = ComponentsFromFileName(fileName);
-         if (components.Length == 3)
-         {
-            return components[0];
-         }
-      }
-      return "";
-   }
-
-   private string AlbumFromFileName(string fileName)
-   {
-      if (fileName.Length > 0)
-      {
-         string[] components = ComponentsFromFileName(fileName);
-         if (components.Length == 3)
-         {
-            return components[1];
-         }
-      }
-      return "";
-   }
-
-   private string SongFromFileName(string fileName)
-   {
-      if (fileName.Length > 0)
-      {
-         string[] components = ComponentsFromFileName(fileName);
-         if (components.Length == 3)
-         {
-            return components[2];
-         }
-      }
-      return "";
-   }
-
    private bool StoreSongMetadata(SongMetadata fsSong)
    {
       if (_jukeboxDb != null)
@@ -471,8 +409,9 @@ public class Jukebox
          return "";
       }
 
-      string artist = ArtistFromFileName(songUid);
+      string artist = JbUtils.ArtistFromFileName(songUid);
       string artistLetter;
+
       if (artist.StartsWith("A "))
       {
          artistLetter = artist.Substring(2, 1);
@@ -525,12 +464,13 @@ public class Jukebox
                string fileName = listingEntry;
                (string, string) pathTuple = Utils.PathSplitExt(fullPath);
                string extension = pathTuple.Item1;
+
                if (extension.Length > 0)
                {
                   long fileSize = Utils.GetFileSize(fullPath);
-                  string artist = ArtistFromFileName(fileName);
-                  string album = AlbumFromFileName(fileName);
-                  string song = SongFromFileName(fileName);
+                  string artist = JbUtils.ArtistFromFileName(fileName);
+                  string album = JbUtils.AlbumFromFileName(fileName);
+                  string song = JbUtils.SongFromFileName(fileName);
                   if (fileSize > 0 && artist.Length > 0 && album.Length > 0 &&
                       song.Length > 0)
                   {
@@ -589,7 +529,8 @@ public class Jukebox
                               // storage system since we won't have any way to
                               // access it since we can't store the song
                               // metadata locally.
-                              Console.WriteLine("unable to store metadata, deleting obj {0}", fsSong.Fm.ObjectName);
+                              Console.WriteLine("unable to store metadata, deleting obj {0}",
+                                 fsSong.Fm.ObjectName);
                                               
                               _storageSystem.DeleteObject(container,
                                                           fsSong.Fm.ObjectName);
@@ -710,7 +651,7 @@ public class Jukebox
       {
          if (_debugPrint)
          {
-            Console.WriteLine("file integrity bypassed, no jukebox options or check integrity not turned on");
+            Console.WriteLine("file integrity bypassed");
          }
       }
 
@@ -1150,8 +1091,8 @@ public class Jukebox
          }
          else
          {
-            Console.WriteLine("error: audio_player.ini missing value for '{0}' within [{1}]",
-               key, osIdentifier);
+            Console.WriteLine("error: {0} missing value for '{1}' within [{2}]",
+               IniFileName, key, osIdentifier);
             return;
          }
 
@@ -1185,8 +1126,8 @@ public class Jukebox
          }
          else
          {
-            Console.WriteLine("error: audio_player.ini missing value for '{0}' within [{1}]",
-               key, osIdentifier);
+            Console.WriteLine("error: {0} missing value for '{1}' within [{2}]",
+               IniFileName, key, osIdentifier);
             return;
          }
 
@@ -1209,7 +1150,8 @@ public class Jukebox
                if (posPlaceholder == -1) {
                   Console.WriteLine("error: {0} value does not contain placeholder '{1}'",
                      key, placeholder);
-                  Console.WriteLine("ignoring '{0}', using 'audio_player_command_args' for song resume", key);
+                  Console.WriteLine("ignoring '{0}', using '{1}' for song resume",
+                     key, keyAudioPlayerCommandArgs);
                   _audioPlayerResumeArgs = "";
                }
             }
@@ -1242,7 +1184,7 @@ public class Jukebox
             {
                Console.WriteLine("first song downloaded. starting playing now.");
 
-               // write PID to "jukebox.pid"
+               // write PID to jukebox pid file
                int pidValue = Utils.GetPid();
                File.WriteAllText(jukeboxPidFileName, pidValue.ToString());
 
@@ -1302,9 +1244,9 @@ public class Jukebox
          finally
          {
             Console.WriteLine(Environment.NewLine + "exiting jukebox");
-            if (File.Exists("jukebox.pid"))
+            if (File.Exists(jukeboxPidFileName))
             {
-               File.Delete("jukebox.pid");
+               File.Delete(jukeboxPidFileName);
             }
             ExitRequested = true;
          }
@@ -1446,7 +1388,7 @@ public class Jukebox
 
          if (!haveContainer)
          {
-            Console.WriteLine("error: unable to create container for playlists. unable to import");
+            Console.WriteLine("error: unable to create container for playlists");
             return;
          }
 
@@ -1716,7 +1658,7 @@ public class Jukebox
 
          if (!haveContainer)
          {
-            Console.WriteLine("error: unable to create container for album art. unable to import");
+            Console.WriteLine("error: unable to create container for album art");
             return;
          }
 
@@ -1776,6 +1718,7 @@ public class Jukebox
       string jsonFileName =
          JbUtils.EncodeArtistAlbum(artist, albumName) + JsonFileExt;
       string localJsonFile = Path.Join(_songPlayDir, jsonFileName);
+
       if (_storageSystem.GetObject(_albumContainer,
                                    jsonFileName,
                                    localJsonFile) > 0)
@@ -1833,6 +1776,7 @@ public class Jukebox
       // retrieve the playlist file from storage
       string localFilePath = Path.Join(Directory.GetCurrentDirectory(),
                                        playlistFile);
+
       if (_storageSystem.GetObject(_playlistContainer,
                                    playlistFile,
                                    localFilePath) > 0)
@@ -1840,7 +1784,9 @@ public class Jukebox
          string fileContents = File.ReadAllText(localFilePath);
          if (fileContents.Length > 0)
          {
-            Playlist? plJson = JsonSerializer.Deserialize<Playlist>(fileContents);
+            Playlist? plJson =
+               JsonSerializer.Deserialize<Playlist>(fileContents);
+
             // print the list of songs
             if (plJson != null)
             {
@@ -1879,7 +1825,8 @@ public class Jukebox
 
                      if (!songFound)
                      {
-                        Console.WriteLine("error: unable to retrieve metadata for '{0}'", encodedSong);
+                        Console.WriteLine("error: unable to retrieve metadata for '{0}'",
+                           encodedSong);
                      }
                   }
                }

@@ -51,4 +51,73 @@ public class JbUtils
 
       return s;
    }
+
+   public static string[] ComponentsFromFileName(string fileName)
+   {
+      if (fileName.Length == 0)
+      {
+         return new string[] { };
+      }
+      int posExtension = fileName.IndexOf('.');
+      string baseFileName;
+      if (posExtension > -1)
+      {
+         baseFileName = fileName.Substring(0, posExtension);
+      }
+      else
+      {
+         baseFileName = fileName;
+      }
+      string[] components = baseFileName.Split("--");
+      if (components.Length == 3)
+      {
+         return new[] {JbUtils.DecodeValue(components[0]),
+                       JbUtils.DecodeValue(components[1]),
+                       JbUtils.DecodeValue(components[2])};
+      }
+      else
+      {
+         return new[] { "", "", "" };
+      }
+   }
+
+   public static string ArtistFromFileName(string fileName)
+   {
+      if (fileName.Length > 0)
+      {
+         string[] components = ComponentsFromFileName(fileName);
+         if (components.Length == 3)
+         {
+            return components[0];
+         }
+      }
+      return "";
+   }
+
+   public static string AlbumFromFileName(string fileName)
+   {
+      if (fileName.Length > 0)
+      {
+         string[] components = ComponentsFromFileName(fileName);
+         if (components.Length == 3)
+         {
+            return components[1];
+         }
+      }
+      return "";
+   }
+
+   public static string SongFromFileName(string fileName)
+   {
+      if (fileName.Length > 0)
+      {
+         string[] components = ComponentsFromFileName(fileName);
+         if (components.Length == 3)
+         {
+            return components[2];
+         }
+      }
+      return "";
+   }
+
 }
