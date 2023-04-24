@@ -194,7 +194,7 @@ public class JukeboxMain
       optParser.AddOptionalBoolFlag("--encrypt", "encrypt file contents");
       optParser.AddOptionalStringArgument("--key", "encryption key");
       optParser.AddOptionalStringArgument("--keyfile", "path to file containing encryption key");
-      optParser.AddOptionalStringArgument("--storage", "storage system type (s3, swift, azure)");
+      optParser.AddOptionalStringArgument("--storage", "storage system type (s3, fs)");
       optParser.AddOptionalStringArgument("--artist", "limit operations to specified artist");
       optParser.AddOptionalStringArgument("--playlist", "limit operations to specified playlist");
       optParser.AddOptionalStringArgument("--song", "limit operations to specified song");

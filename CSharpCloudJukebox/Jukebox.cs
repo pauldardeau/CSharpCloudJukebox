@@ -1758,7 +1758,6 @@ public class Jukebox
                   if (artist.Length > 0 && album.Length > 0 && songName.Length > 0)
                   {
                      string encodedSong = JbUtils.EncodeArtistAlbumSong(artist, album, songName);
-                     encodedSong = JbUtils.RemovePunctuation(encodedSong);
 
                      bool songFound = false;
 
