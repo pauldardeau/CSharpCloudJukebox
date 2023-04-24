@@ -12,16 +12,16 @@ public class Jukebox
 
    // containers
    private const string albumContainer = "albums";
-	private const string albumArtContainer = "album-art";
-	private const string metadataContainer = "music-metadata";
-	private const string playlistContainer = "playlists";
-	private const string songContainerSuffix = "-artist-songs";
+   private const string albumArtContainer = "album-art";
+   private const string metadataContainer = "music-metadata";
+   private const string playlistContainer = "playlists";
+   private const string songContainerSuffix = "-artist-songs";
 
    // directories
-	private const string albumArtImportDir = "album-art-import";
-	private const string playlistImportDir = "playlist-import";
-	private const string songImportDir = "song-import";
-	private const string songPlayDir = "song-play";
+   private const string albumArtImportDir = "album-art-import";
+   private const string playlistImportDir = "playlist-import";
+   private const string songImportDir = "song-import";
+   private const string songPlayDir = "song-play";
 
    // files
    private const string downloadExtension = ".download";
