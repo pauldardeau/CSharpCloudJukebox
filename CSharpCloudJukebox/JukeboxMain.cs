@@ -61,6 +61,19 @@ public class JukeboxMain
    private const string audioFileTypeM4a = "m4a";
    private const string audioFileTypeFlac = "flac";
 
+   private string artist;
+   private string album;
+   private string song;
+   private string playlist;
+
+
+   public JukeboxMain()
+   {
+      artist = "";
+      album = "";
+      song = "";
+      playlist = "";
+   }
 
    private StorageSystem? ConnectS3System(Dictionary<string, string> credentials,
                                           bool inDebugMode,
@@ -96,7 +109,8 @@ public class JukeboxMain
       }
       else
       {
-         Console.WriteLine("error: s3 requires {0} to be configured in creds file", endpointUrl);
+         Console.WriteLine("error: s3 requires {0} to be configured in creds file",
+                           endpointUrl);
          return null;
       }
 
@@ -220,7 +234,8 @@ public class JukeboxMain
       Console.WriteLine("");
    }
 
-   private bool InitStorageSystem(StorageSystem storageSys, string containerPrefix)
+   private bool InitStorageSystem(StorageSystem storageSys,
+                                  string containerPrefix)
    {
       bool success = false;
       Console.WriteLine("starting storage system initialization...");
@@ -237,15 +252,196 @@ public class JukeboxMain
       return success;
    }
 
+   private int RunJukeboxCommand(Jukebox jukebox, String command)
+   {
+      var exitCode = 0;
+
+      try
+      {
+         if (command == cmdImportSongs)
+         {
+            jukebox.ImportSongs();
+         }
+         else if (command == cmdImportPlaylists)
+         {
+            jukebox.ImportPlaylists();
+         }
+         else if (command == cmdPlay)
+         {
+            bool shuffle = false;
+            jukebox.PlaySongs(shuffle, artist, album);
+         }
+         else if (command == cmdShufflePlay)
+         {
+            bool shuffle = true;
+            jukebox.PlaySongs(shuffle, artist, album);
+         }
+         else if (command == cmdListSongs)
+         {
+            jukebox.ShowListings();
+         }
+         else if (command == cmdListArtists)
+         {
+            jukebox.ShowArtists();
+         }
+         else if (command == cmdListContainers)
+         {
+            jukebox.ShowListContainers();
+         }
+         else if (command == cmdListGenres)
+         {
+            jukebox.ShowGenres();
+         }
+         else if (command == cmdListAlbums)
+         {
+            jukebox.ShowAlbums();
+         }
+         else if (command == cmdListPlaylists)
+         {
+            jukebox.ShowPlaylists();
+         }
+         else if (command == cmdShowPlaylist)
+         {
+            if (playlist.Length > 0)
+            {
+               jukebox.ShowPlaylist(playlist);
+            }
+            else
+            {
+               Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdPlayPlaylist)
+         {
+            if (playlist.Length > 0)
+            {
+               jukebox.PlayPlaylist(playlist);
+            }
+            else
+            {
+               Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdRetrieveCatalog)
+         {
+            Console.WriteLine("retrieve-catalog not yet implemented");
+         }
+         else if (command == cmdDeleteSong)
+         {
+            if (song.Length > 0)
+            {
+               if (jukebox.DeleteSong(song))
+               {
+                  Console.WriteLine("song deleted");
+               }
+               else
+               {
+                  Console.WriteLine("error: unable to delete song");
+                  exitCode = 1;
+               }
+            }
+            else
+            {
+               Console.WriteLine("error: song must be specified using {0}{1} option", argPrefix, argSong);
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdDeleteArtist)
+         {
+            if (artist.Length > 0)
+            {
+               if (jukebox.DeleteArtist(artist))
+               {
+                  Console.WriteLine("artist deleted");
+               }
+               else
+               {
+                  Console.WriteLine("error: unable to delete artist");
+                  exitCode = 1;
+               }
+            }
+            else
+            {
+               Console.WriteLine("error: artist must be specified using {0}{1} option", argPrefix, argArtist);
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdDeleteAlbum)
+         {
+            if (album.Length > 0)
+            {
+               if (jukebox.DeleteAlbum(album))
+               {
+                  Console.WriteLine("album deleted");
+               }
+               else
+               {
+                  Console.WriteLine("error: unable to delete album");
+                  exitCode = 1;
+               }
+            }
+            else
+            {
+               Console.WriteLine("error: album must be specified using {0}{1} option", argPrefix, argAlbum);
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdDeletePlaylist)
+         {
+            if (playlist.Length > 0)
+            {
+               if (jukebox.DeletePlaylist(playlist))
+               {
+                  Console.WriteLine("playlist deleted");
+               }
+               else
+               {
+                  Console.WriteLine("error: unable to delete playlist");
+                  exitCode = 1;
+               }
+            }
+            else
+            {
+               Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdUploadMetadataDb)
+         {
+            if (jukebox.UploadMetadataDb())
+            {
+               Console.WriteLine("metadata db uploaded");
+            }
+            else
+            {
+               Console.WriteLine("error: unable to upload metadata db");
+               exitCode = 1;
+            }
+         }
+         else if (command == cmdImportAlbumArt)
+         {
+            jukebox.ImportAlbumArt();
+         }
+      }
+      catch (Exception e)
+      {
+         Console.WriteLine("exception caught: " + e);
+      }
+      finally
+      {
+         jukebox.Exit();
+      }
+
+      return exitCode;
+   }
+
    public void Main(string[] consoleArgs)
    {
       int exitCode = 0;
       bool debugMode = false;
       string storageType = ssS3;
-      string artist = "";
-      string playlist = "";
-      string song = "";
-      string album = "";
 
       ArgumentParser optParser = new ArgumentParser();
       optParser.AddOptionalBoolFlag(argPrefix+argDebug, "run in debug mode");
@@ -340,7 +536,8 @@ public class JukeboxMain
          string containerPrefix = "";
          string credsFile = storageType + credsFileSuffix;
          Dictionary<string, string> creds = new Dictionary<string, string>();
-         string credsFilePath = Path.Join(Directory.GetCurrentDirectory(), credsFile);
+         string credsFilePath = Path.Join(Directory.GetCurrentDirectory(),
+                                          credsFile);
 
          if (Utils.PathExists(credsFilePath))
          {
@@ -377,7 +574,8 @@ public class JukeboxMain
             {
                if (debugMode)
                {
-                  Console.WriteLine("error: unable to read file {0}", credsFilePath);
+                  Console.WriteLine("error: unable to read file {0}",
+                                    credsFilePath);
                }
             }
          }
@@ -457,7 +655,8 @@ public class JukeboxMain
                         {
                            if (command == cmdInitStorage)
                            {
-                              if (InitStorageSystem(storageSystem, containerPrefix))
+                              if (InitStorageSystem(storageSystem,
+                                                    containerPrefix))
                               {
                                  Environment.Exit(0);
                               }
@@ -467,186 +666,12 @@ public class JukeboxMain
                               }
                            }
 
-                           jukebox = new Jukebox(options, storageSystem, containerPrefix);
+                           jukebox = new Jukebox(options,
+                                                 storageSystem,
+                                                 containerPrefix);
                            if (jukebox.Enter())
                            {
-                              try
-                              {
-                                 if (command == cmdImportSongs)
-                                 {
-                                    jukebox.ImportSongs();
-                                 }
-                                 else if (command == cmdImportPlaylists)
-                                 {
-                                    jukebox.ImportPlaylists();
-                                 }
-                                 else if (command == cmdPlay)
-                                 {
-                                    bool shuffle = false;
-                                    jukebox.PlaySongs(shuffle, artist, album);
-                                 }
-                                 else if (command == cmdShufflePlay)
-                                 {
-                                    bool shuffle = true;
-                                    jukebox.PlaySongs(shuffle, artist, album);
-                                 }
-                                 else if (command == cmdListSongs)
-                                 {
-                                    jukebox.ShowListings();
-                                 }
-                                 else if (command == cmdListArtists)
-                                 {
-                                    jukebox.ShowArtists();
-                                 }
-                                 else if (command == cmdListContainers)
-                                 {
-                                    jukebox.ShowListContainers();
-                                 }
-                                 else if (command == cmdListGenres)
-                                 {
-                                    jukebox.ShowGenres();
-                                 }
-                                 else if (command == cmdListAlbums)
-                                 {
-                                    jukebox.ShowAlbums();
-                                 }
-                                 else if (command == cmdListPlaylists)
-                                 {
-                                    jukebox.ShowPlaylists();
-                                 }
-                                 else if (command == cmdShowPlaylist)
-                                 {
-                                    if (playlist.Length > 0)
-                                    {
-                                       jukebox.ShowPlaylist(playlist);
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdPlayPlaylist)
-                                 {
-                                    if (playlist.Length > 0)
-                                    {
-                                       jukebox.PlayPlaylist(playlist);
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdRetrieveCatalog)
-                                 {
-                                    Console.WriteLine("retrieve-catalog not yet implemented");
-                                 }
-                                 else if (command == cmdDeleteSong)
-                                 {
-                                    if (song.Length > 0)
-                                    {
-                                       if (jukebox.DeleteSong(song))
-                                       {
-                                          Console.WriteLine("song deleted");
-                                       }
-                                       else
-                                       {
-                                          Console.WriteLine("error: unable to delete song");
-                                          exitCode = 1;
-                                       }
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: song must be specified using {0}{1} option", argPrefix, argSong);
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdDeleteArtist)
-                                 {
-                                    if (artist.Length > 0)
-                                    {
-                                       if (jukebox.DeleteArtist(artist))
-                                       {
-                                          Console.WriteLine("artist deleted");
-                                       }
-                                       else
-                                       {
-                                          Console.WriteLine("error: unable to delete artist");
-                                          exitCode = 1;
-                                       }
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: artist must be specified using {0}{1} option", argPrefix, argArtist);
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdDeleteAlbum)
-                                 {
-                                    if (album.Length > 0)
-                                    {
-                                       if (jukebox.DeleteAlbum(album))
-                                       {
-                                          Console.WriteLine("album deleted");
-                                       }
-                                       else
-                                       {
-                                          Console.WriteLine("error: unable to delete album");
-                                          exitCode = 1;
-                                       }
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: album must be specified using {0}{1} option", argPrefix, argAlbum);
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdDeletePlaylist)
-                                 {
-                                    if (playlist.Length > 0)
-                                    {
-                                       if (jukebox.DeletePlaylist(playlist))
-                                       {
-                                          Console.WriteLine("playlist deleted");
-                                       }
-                                       else
-                                       {
-                                          Console.WriteLine("error: unable to delete playlist");
-                                          exitCode = 1;
-                                       }
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: playlist must be specified using {0}{1} option", argPrefix, argPlaylist);
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdUploadMetadataDb)
-                                 {
-                                    if (jukebox.UploadMetadataDb())
-                                    {
-                                       Console.WriteLine("metadata db uploaded");
-                                    }
-                                    else
-                                    {
-                                       Console.WriteLine("error: unable to upload metadata db");
-                                       exitCode = 1;
-                                    }
-                                 }
-                                 else if (command == cmdImportAlbumArt)
-                                 {
-                                    jukebox.ImportAlbumArt();
-                                 }
-                              }
-                              catch (Exception e)
-                              {
-                                 Console.WriteLine("exception caught: " + e);
-                              }
-                              finally
-                              {
-                                 jukebox.Exit();
-                              }
+                              exitCode = RunJukeboxCommand(jukebox, command);
                            }
                         }
                         finally
