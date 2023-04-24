@@ -1693,11 +1693,6 @@ public class Jukebox
       }
    }
 
-   public double GetMemoryInUse()
-   {
-      return Math.Round(Environment.WorkingSet / (double)(1024 * 1024), 2);
-   }
-
    public long GetNumberSongs()
    {
       return _numberSongs;

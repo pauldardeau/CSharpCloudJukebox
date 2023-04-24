@@ -122,7 +122,7 @@ public class HttpServer
                   else if (endpoint == EndPointApiMemoryUsage)
                   {
                      MemoryUsage memUsage = new MemoryUsage();
-                     memUsage.MemoryUseMegabytes = _jukebox.GetMemoryInUse();
+                     memUsage.MemoryUseMegabytes = Utils.GetMemoryInUse();
                      responseBody = JsonSerializer.Serialize(memUsage);
                   }
                   else

@@ -238,4 +238,9 @@ public class Utils
       }
       throw new Exception("No network adapters with an IPv4 address in the system!");
    }
+
+   public static double GetMemoryInUse()
+   {
+      return Math.Round(Environment.WorkingSet / (double)(1024 * 1024), 2);
+   }
 }
