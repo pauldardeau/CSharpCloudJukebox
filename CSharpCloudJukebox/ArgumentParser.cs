@@ -90,7 +90,8 @@ public class ArgumentParser
             {
                if (_debugPrint)
                {
-                  Console.WriteLine("ArgumentParser adding key={0} value=true", arg);
+                  Console.WriteLine("ArgumentParser adding key={0} value=true",
+                                    arg);
                }
                dictArgs[arg] = true;
             }
@@ -103,7 +104,8 @@ public class ArgumentParser
                   int intValue = Int32.Parse(nextArg);
                   if (_debugPrint)
                   {
-                     Console.WriteLine("ArgumentParser adding key={0} value={1}", arg, intValue);
+                     Console.WriteLine("ArgumentParser adding key={0} value={1}",
+                                       arg, intValue);
                   }
                   dictArgs[arg] = intValue;
                }
@@ -120,7 +122,8 @@ public class ArgumentParser
                   string nextArg = args[i];
                   if (_debugPrint)
                   {
-                     Console.WriteLine("ArgumentParser adding key={0} value={1}", arg, nextArg);
+                     Console.WriteLine("ArgumentParser adding key={0} value={1}",
+                                       arg, nextArg);
                   }
                   dictArgs[arg] = nextArg;
                }
@@ -147,7 +150,8 @@ public class ArgumentParser
                   string commandName = _listCommands[commandsFound];
                   if (_debugPrint)
                   {
-                     Console.WriteLine("ArgumentParser adding key={0} value={1}", commandName, arg);
+                     Console.WriteLine("ArgumentParser adding key={0} value={1}",
+                                       commandName, arg);
                   }
                   dictArgs[commandName] = arg;
                   commandsFound++;

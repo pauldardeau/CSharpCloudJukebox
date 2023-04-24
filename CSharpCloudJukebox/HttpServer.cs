@@ -47,10 +47,15 @@ public class HttpServer
       int portNumber = 5309;
 
       string localHostPrefix = string.Format("http://127.0.0.1:{0}", portNumber);
-      string ipHostPrefix = string.Format("http://{0}:{1}", Utils.GetLocalIpAddress(), portNumber);
+      string ipHostPrefix = string.Format("http://{0}:{1}",
+                                          Utils.GetLocalIpAddress(),
+                                          portNumber);
 
       string[] prefixes = { localHostPrefix, ipHostPrefix };
-      string[] endpoints = { EndPointSongAdvance, EndPointTogglePausePlay, EndPointApiInfo, EndPointApiMemoryUsage };
+      string[] endpoints = { EndPointSongAdvance,
+                             EndPointTogglePausePlay,
+                             EndPointApiInfo,
+                             EndPointApiMemoryUsage };
       
       // URI prefixes are required,
       // for example "http://contoso.com:8080/index/".

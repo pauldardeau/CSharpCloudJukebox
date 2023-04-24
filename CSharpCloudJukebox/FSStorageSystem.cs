@@ -136,7 +136,10 @@ public class FsStorageSystem : StorageSystem
                                   PropertySet? props)
    {
       bool objectAdded = false;
-      if (containerName.Length > 0 && objectName.Length > 0 && fileContents.Length > 0)
+
+      if (containerName.Length > 0 &&
+          objectName.Length > 0 &&
+          fileContents.Length > 0)
       {
          string containerDir = Path.Join(_rootDir, containerName);
          if (Directory.Exists(containerDir))
@@ -148,7 +151,9 @@ public class FsStorageSystem : StorageSystem
             {
                if (DebugMode)
                {
-                  Console.WriteLine("object added: {0}/{1}", containerName, objectName);
+                  Console.WriteLine("object added: {0}/{1}",
+                                    containerName,
+                                    objectName);
                }
                if (props != null && props.Count() > 0)
                {
@@ -212,7 +217,9 @@ public class FsStorageSystem : StorageSystem
             {
                if (DebugMode)
                {
-                  Console.WriteLine("object deleted: {0}/{1}", containerName, objectName);
+                  Console.WriteLine("object deleted: {0}/{1}",
+                                    containerName,
+                                    objectName);
                }
                string metaPath = objectPath + ".meta";
                if (File.Exists(metaPath))

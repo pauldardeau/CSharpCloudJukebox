@@ -21,7 +21,8 @@ public class IniReader
    {
       if (!ReadFile())
       {
-         Console.WriteLine("error: unable to read configuration file: {0}", _iniFile);
+         Console.WriteLine("error: unable to read configuration file: {0}",
+                           _iniFile);
          return false;
       }
 
@@ -109,7 +110,8 @@ public class IniReader
     
       if (!map.HasKey(strippedKey))
       {
-         System.Console.WriteLine("debug: map does not contain key '{0}'", strippedKey);
+         System.Console.WriteLine("debug: map does not contain key '{0}'",
+                                  strippedKey);
          value = "";
          return false;
       }

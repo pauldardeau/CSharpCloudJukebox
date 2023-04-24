@@ -65,7 +65,8 @@ public sealed class FileMetadata
       return hash;
    }
 
-   public static FileMetadata? FromDictionary(Dictionary<string, object> dictionary, string prefix="")
+   public static FileMetadata? FromDictionary(Dictionary<string, object> dictionary,
+                                              string prefix="")
    {
       string fileUid;
       string containerName;

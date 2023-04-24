@@ -26,40 +26,40 @@ public class JukeboxMain
    private const string cmdImportPlaylists = "import-playlists";
    private const string cmdImportSongs = "import-songs";
    private const string cmdInitStorage = "init-storage";
-	private const string cmdListAlbums = "list-albums";
-	private const string cmdListArtists = "list-artists";
-	private const string cmdListContainers = "list-containers";
-	private const string cmdListGenres = "list-genres";
-	private const string cmdListPlaylists = "list-playlists";
-	private const string cmdListSongs = "list-songs";
-	private const string cmdPlay = "play";
-	private const string cmdPlayAlbum = "play-album";
-	private const string cmdPlayPlaylist = "play-playlist";
-	private const string cmdRetrieveCatalog = "retrieve-catalog";
-	private const string cmdShowAlbum = "show-album";
-	private const string cmdShowPlaylist = "show-playlist";
-	private const string cmdShufflePlay = "shuffle-play";
-	private const string cmdUploadMetadataDb = "upload-metadata-db";
-	private const string cmdUsage = "usage";
+   private const string cmdListAlbums = "list-albums";
+   private const string cmdListArtists = "list-artists";
+   private const string cmdListContainers = "list-containers";
+   private const string cmdListGenres = "list-genres";
+   private const string cmdListPlaylists = "list-playlists";
+   private const string cmdListSongs = "list-songs";
+   private const string cmdPlay = "play";
+   private const string cmdPlayAlbum = "play-album";
+   private const string cmdPlayPlaylist = "play-playlist";
+   private const string cmdRetrieveCatalog = "retrieve-catalog";
+   private const string cmdShowAlbum = "show-album";
+   private const string cmdShowPlaylist = "show-playlist";
+   private const string cmdShufflePlay = "shuffle-play";
+   private const string cmdUploadMetadataDb = "upload-metadata-db";
+   private const string cmdUsage = "usage";
 
-	private const string ssFs = "fs";
-	private const string ssS3 = "s3";
+   private const string ssFs = "fs";
+   private const string ssS3 = "s3";
 
-	private const string credsFileSuffix = "_creds.txt";
-	private const string credsContainerPrefix = "container_prefix";
+   private const string credsFileSuffix = "_creds.txt";
+   private const string credsContainerPrefix = "container_prefix";
 
-	private const string awsAccessKey = "aws_access_key";
-	private const string awsSecretKey = "aws_secret_key";
-	private const string updateAwsAccessKey = "update_aws_access_key";
-	private const string updateAwsSecretKey = "update_aws_secret_key";
-	private const string endpointUrl = "endpoint_url";
-	private const string region = "region";
+   private const string awsAccessKey = "aws_access_key";
+   private const string awsSecretKey = "aws_secret_key";
+   private const string updateAwsAccessKey = "update_aws_access_key";
+   private const string updateAwsSecretKey = "update_aws_secret_key";
+   private const string endpointUrl = "endpoint_url";
+   private const string region = "region";
 
-	private const string fsRootDir = "root_dir";
+   private const string fsRootDir = "root_dir";
 
-	private const string audioFileTypeMp3 = "mp3";
-	private const string audioFileTypeM4a = "m4a";
-	private const string audioFileTypeFlac = "flac";
+   private const string audioFileTypeMp3 = "mp3";
+   private const string audioFileTypeM4a = "m4a";
+   private const string audioFileTypeFlac = "flac";
 
 
    private StorageSystem? ConnectS3System(Dictionary<string, string> credentials,
